@@ -71,6 +71,7 @@ const ReactionTap = () => {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const targetsRef = useRef<Target[]>([]);
   const nextId = useRef(0);
+  const hitsRef = useRef(0);
   const config = getLevelConfig(level);
   const hitsNeeded = getHitsNeeded(level);
 
