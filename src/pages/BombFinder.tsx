@@ -10,36 +10,29 @@ const ROWS = 5;
 const TOTAL_CELLS = COLS * ROWS;
 
 function getLevelConfig(level: number): { bombs: number; safeTarget: number } {
-  let bombs: number;
-  let safeTarget: number;
+  // Bombs: 3 → 25 over 100 levels
+  const bombs = Math.min(Math.round(3 + ((level - 1) / 99) * 22), TOTAL_CELLS - 2);
+  const safeCells = TOTAL_CELLS - bombs;
 
-  if (level <= 5) {
-    bombs = 3;
-    safeTarget = 8;
-  } else if (level <= 10) {
-    bombs = Math.round(3 + ((level - 5) / 5) * 3);
-    safeTarget = 8;
-  } else if (level <= 20) {
-    bombs = Math.round(6 + ((level - 10) / 10) * 3);
-    safeTarget = 7;
-  } else if (level <= 40) {
-    bombs = Math.round(9 + ((level - 20) / 20) * 4);
-    safeTarget = 7;
-  } else if (level <= 60) {
-    bombs = Math.round(13 + ((level - 40) / 20) * 4);
-    safeTarget = 6;
-  } else if (level <= 80) {
-    bombs = Math.round(17 + ((level - 60) / 20) * 4);
-    safeTarget = 5;
+  // SafeTarget scales up then back down as safe cells shrink
+  // Peak around level 40-50 where both bombs and required clicks are high
+  let safeTarget: number;
+  if (level <= 10) {
+    safeTarget = Math.round(5 + ((level - 1) / 9) * 3); // 5 → 8
+  } else if (level <= 30) {
+    safeTarget = Math.round(8 + ((level - 10) / 20) * 6); // 8 → 14
+  } else if (level <= 50) {
+    safeTarget = Math.round(14 + ((level - 30) / 20) * 2); // 14 → 16
+  } else if (level <= 70) {
+    safeTarget = Math.round(16 - ((level - 50) / 20) * 4); // 16 → 12
   } else if (level <= 90) {
-    bombs = Math.round(21 + ((level - 80) / 10) * 2);
-    safeTarget = 5;
+    safeTarget = Math.round(12 - ((level - 70) / 20) * 4); // 12 → 8
   } else {
-    bombs = Math.round(23 + ((level - 90) / 10) * 2);
-    safeTarget = 4;
+    safeTarget = Math.round(8 - ((level - 90) / 10) * 3); // 8 → 5
   }
 
-  bombs = Math.min(bombs, TOTAL_CELLS - 2);
+  // Never require more safe clicks than available safe cells
+  safeTarget = Math.min(safeTarget, safeCells);
   return { bombs, safeTarget };
 }
 
