@@ -1,13 +1,40 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, ArrowRight } from "lucide-react";
+import { RotateCcw, ArrowRight, Sparkles } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
+import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 
-const EMOJIS = ["🎮", "🎲", "🎯", "🏆", "💎", "⚡", "🔥", "🎪", "🌟", "🎵", "🎨", "🚀", "🎁", "🃏", "🧩", "🎰"];
+const EMOJIS = [
+  "🎮", "🎲", "🎯", "🏆", "💎", "⚡", "🔥", "🎪",
+  "🌟", "🎵", "🎨", "🚀", "🎁", "🃏", "🧩", "🎰",
+  "🦄", "🐉", "👾", "🤖", "🛸", "🌈", "🍀", "🔮",
+  "🧲",
+];
 
-function getPairCount(level: number) {
-  return Math.min(4 + Math.floor(level / 10), 16);
+function getPairCount(level: number): number {
+  if (level <= 0) return 4;
+  if (level <= 4) return 4 + level;                    // 4→8
+  if (level <= 9) return 6 + Math.floor((level - 4) * 0.8); // ~6→10
+  if (level <= 19) return 8 + Math.floor((level - 9) * 0.2); // ~8→10
+  if (level <= 49) return 10 + Math.floor((level - 19) * 0.17); // ~10→15
+  return Math.min(15 + Math.floor((level - 49) * 0.2), 25); // ~15→25
+}
+
+function getMaxMoves(level: number, pairs: number): number {
+  const base = pairs * 3;
+  const reduction = Math.floor(level * 0.15);
+  return Math.max(base - reduction, pairs + Math.ceil(pairs * 0.5));
+}
+
+function getPointsForLevel(level: number): number {
+  if (level <= 9) return 10;
+  if (level <= 19) return 15;
+  if (level <= 39) return 20;
+  if (level <= 59) return 25;
+  if (level <= 79) return 30;
+  if (level <= 89) return 40;
+  return 50;
 }
 
 function generateCards(level: number) {
@@ -19,7 +46,6 @@ function generateCards(level: number) {
     flipped: false,
     matched: false,
   }));
-  // Shuffle
   for (let i = cards.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
@@ -36,10 +62,14 @@ const MemoryMatch = () => {
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
   const [selected, setSelected] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [gameState, setGameState] = useState<"playing" | "won">("playing");
+  const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
   const [earnedPoints, setEarnedPoints] = useState(0);
+  const [matchFlash, setMatchFlash] = useState<number[]>([]);
+  const [failFlash, setFailFlash] = useState<number[]>([]);
+  const [sparkleIds, setSparkleIds] = useState<number[]>([]);
 
   const pairCount = useMemo(() => getPairCount(level), [level]);
+  const maxMoves = useMemo(() => getMaxMoves(level, pairCount), [level, pairCount]);
 
   const handleFlip = useCallback(
     (card: Card) => {
@@ -51,17 +81,28 @@ const MemoryMatch = () => {
       setSelected(nextSelected);
 
       if (nextSelected.length === 2) {
-        setMoves((m) => m + 1);
+        const newMoves = moves + 1;
+        setMoves(newMoves);
         const [a, b] = nextSelected.map((id) => nextCards.find((c) => c.id === id)!);
+
         if (a.emoji === b.emoji) {
+          playClickSafe();
+          setMatchFlash([a.id, b.id]);
+          setSparkleIds([a.id, b.id]);
+          setTimeout(() => setMatchFlash([]), 600);
+          setTimeout(() => setSparkleIds([]), 1000);
+
           setTimeout(() => {
             setCards((prev) => {
               const updated = prev.map((c) =>
                 c.id === a.id || c.id === b.id ? { ...c, matched: true } : c
               );
-              // Check win
               if (updated.every((c) => c.matched)) {
-                const pts = Math.max(50, 100 + level * 8 - moves * 3);
+                playLevelWin();
+                const basePts = getPointsForLevel(level);
+                const movesLeft = maxMoves - newMoves;
+                const bonus = Math.max(0, Math.floor(movesLeft * 0.5));
+                const pts = basePts + bonus;
                 setEarnedPoints(pts);
                 addPoints(pts);
                 updateProgress("memory-match", level);
@@ -70,8 +111,12 @@ const MemoryMatch = () => {
               return updated;
             });
             setSelected([]);
-          }, 400);
+          }, 500);
         } else {
+          playClickBomb();
+          setFailFlash([a.id, b.id]);
+          setTimeout(() => setFailFlash([]), 500);
+
           setTimeout(() => {
             setCards((prev) =>
               prev.map((c) =>
@@ -79,11 +124,16 @@ const MemoryMatch = () => {
               )
             );
             setSelected([]);
+
+            if (newMoves >= maxMoves) {
+              playGameOver();
+              setGameState("lost");
+            }
           }, 800);
         }
       }
     },
-    [cards, selected, gameState, moves, level, addPoints, updateProgress]
+    [cards, selected, gameState, moves, level, maxMoves, addPoints, updateProgress]
   );
 
   const nextLevel = () => {
@@ -104,46 +154,123 @@ const MemoryMatch = () => {
     setEarnedPoints(0);
   };
 
-  const cols = pairCount <= 6 ? 4 : pairCount <= 10 ? 5 : 6;
+  // Grid columns based on card count
+  const totalCards = pairCount * 2;
+  const cols = totalCards <= 8 ? 4 : totalCards <= 16 ? 4 : totalCards <= 20 ? 5 : totalCards <= 30 ? 6 : totalCards <= 40 ? 8 : 10;
 
   return (
     <GameLayout title="Memory Match" level={level} points={data.points}>
-      <div className="w-full max-w-md">
-        <div className="flex justify-between text-xs text-muted-foreground mb-3">
-          <span>Pairs: {pairCount}</span>
-          <span>Moves: {moves}</span>
+      <div className="w-full max-w-lg">
+        {/* Stats */}
+        <div className="flex justify-between items-center mb-4 px-1">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">Pairs: <span className="text-primary font-bold">{pairCount}</span></span>
+            <span className="text-xs text-muted-foreground">Moves: <span className={`font-bold ${moves > maxMoves * 0.75 ? "text-destructive" : "text-accent"}`}>{moves}/{maxMoves}</span></span>
+          </div>
+          <span className="text-xs text-muted-foreground">+{getPointsForLevel(level)} pts</span>
         </div>
 
-        <div className={`grid gap-2 mb-6`} style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-          {cards.map((card) => (
-            <motion.button
-              key={card.id}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => handleFlip(card)}
-              className={`game-grid-cell text-2xl ${
-                card.matched
-                  ? "bg-primary/20 border-primary/50"
-                  : card.flipped
-                  ? "bg-accent/20 border-accent/50"
-                  : "bg-secondary hover:bg-secondary/80"
-              }`}
-            >
-              <AnimatePresence mode="wait">
-                {(card.flipped || card.matched) && (
-                  <motion.span
-                    initial={{ rotateY: 90 }}
-                    animate={{ rotateY: 0 }}
-                    exit={{ rotateY: 90 }}
-                    className="text-xl"
+        {/* Card Grid */}
+        <div
+          className="grid gap-1.5 sm:gap-2 mb-5"
+          style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+        >
+          {cards.map((card) => {
+            const isMatchFlash = matchFlash.includes(card.id);
+            const isFailFlash = failFlash.includes(card.id);
+            const hasSparkle = sparkleIds.includes(card.id);
+
+            return (
+              <motion.button
+                key={card.id}
+                whileTap={!card.flipped && !card.matched ? { scale: 0.9 } : {}}
+                onClick={() => handleFlip(card)}
+                className="relative aspect-square rounded-xl cursor-pointer overflow-hidden"
+                style={{
+                  perspective: "600px",
+                  background: card.matched
+                    ? "linear-gradient(145deg, hsl(160 80% 20%), hsl(160 60% 12%))"
+                    : card.flipped
+                    ? "linear-gradient(145deg, hsl(230 30% 18%), hsl(230 25% 10%))"
+                    : "linear-gradient(145deg, hsl(230 25% 16%), hsl(230 30% 8%))",
+                  border: `1.5px solid ${
+                    isMatchFlash
+                      ? "hsl(160 100% 50%)"
+                      : isFailFlash
+                      ? "hsl(0 100% 50%)"
+                      : card.matched
+                      ? "hsl(160 80% 40% / 0.6)"
+                      : card.flipped
+                      ? "hsl(185 100% 50% / 0.4)"
+                      : "hsl(230 20% 20%)"
+                  }`,
+                  boxShadow: isMatchFlash
+                    ? "0 0 15px hsl(160 100% 50% / 0.6), inset 0 0 10px hsl(160 100% 50% / 0.15)"
+                    : isFailFlash
+                    ? "0 0 15px hsl(0 100% 50% / 0.6), inset 0 0 10px hsl(0 100% 50% / 0.15)"
+                    : card.matched
+                    ? "0 0 12px hsl(160 80% 50% / 0.3), inset 0 1px 2px hsl(0 0% 100% / 0.05)"
+                    : "inset 0 1px 2px hsl(0 0% 100% / 0.05), 0 4px 8px hsl(0 0% 0% / 0.3)",
+                  transition: "border-color 0.3s, box-shadow 0.3s, background 0.3s",
+                }}
+              >
+                {/* Card face */}
+                <div className="w-full h-full flex items-center justify-center">
+                  <AnimatePresence mode="wait">
+                    {card.flipped || card.matched ? (
+                      <motion.span
+                        key="face"
+                        initial={{ rotateY: 90, opacity: 0 }}
+                        animate={{ rotateY: 0, opacity: 1 }}
+                        exit={{ rotateY: 90, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="text-2xl sm:text-3xl select-none"
+                        style={{ backfaceVisibility: "hidden" }}
+                      >
+                        {card.emoji}
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="back"
+                        initial={{ rotateY: -90, opacity: 0 }}
+                        animate={{ rotateY: 0, opacity: 1 }}
+                        exit={{ rotateY: -90, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="text-lg text-muted-foreground/30 font-display font-bold select-none"
+                      >
+                        ?
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Sparkle overlay */}
+                {hasSparkle && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: [0, 1, 0], scale: [0.5, 1.2, 0.5] }}
+                    transition={{ duration: 0.8 }}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
                   >
-                    {card.emoji}
-                  </motion.span>
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </motion.div>
                 )}
-              </AnimatePresence>
-            </motion.button>
-          ))}
+
+                {/* Hover glow */}
+                {!card.flipped && !card.matched && (
+                  <div
+                    className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-xl"
+                    style={{
+                      background: "radial-gradient(circle, hsl(185 100% 50% / 0.08) 0%, transparent 70%)",
+                    }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
         </div>
 
+        {/* Restart button */}
         <div className="flex justify-center">
           <button
             onClick={retry}
@@ -153,29 +280,86 @@ const MemoryMatch = () => {
           </button>
         </div>
 
+        {/* Win / Lose Overlay */}
         <AnimatePresence>
-          {gameState === "won" && (
+          {gameState !== "playing" && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="gradient-card rounded-2xl border border-border/50 p-6 text-center mt-6"
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md"
             >
-              <h2 className="font-display text-xl font-bold text-primary neon-text mb-2">Matched!</h2>
-              <motion.p
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="font-display text-3xl font-black text-accent mb-1"
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="gradient-card rounded-2xl border border-border/50 p-8 text-center max-w-xs mx-4"
+                style={{
+                  boxShadow: gameState === "won"
+                    ? "0 0 40px hsl(185 100% 50% / 0.2)"
+                    : "0 0 40px hsl(0 80% 50% / 0.2)",
+                }}
               >
-                +{earnedPoints} pts
-              </motion.p>
-              <p className="text-muted-foreground text-xs mb-4">Completed in {moves} moves</p>
-              <button
-                onClick={nextLevel}
-                className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-6 py-3 rounded-xl neon-glow hover:scale-105 transition-transform"
-              >
-                {level < 100 ? <>NEXT LEVEL <ArrowRight className="w-4 h-4" /></> : "MAX LEVEL!"}
-              </button>
+                {gameState === "won" ? (
+                  <>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.1 }}
+                      className="text-5xl mb-3"
+                    >
+                      🎉
+                    </motion.div>
+                    <h2 className="font-display text-xl font-bold text-primary neon-text mb-2">
+                      Level Clear!
+                    </h2>
+                    <motion.p
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.2 }}
+                      className="font-display text-3xl font-black text-accent mb-1"
+                    >
+                      +{earnedPoints} pts
+                    </motion.p>
+                    <p className="text-muted-foreground text-xs mb-5">
+                      Completed in {moves} moves
+                    </p>
+                    <button
+                      onClick={nextLevel}
+                      className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-6 py-3 rounded-xl neon-glow hover:scale-105 transition-transform"
+                    >
+                      {level < 100 ? (
+                        <>NEXT LEVEL <ArrowRight className="w-4 h-4" /></>
+                      ) : (
+                        "MAX LEVEL!"
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", delay: 0.1 }}
+                      className="text-5xl mb-3"
+                    >
+                      😵
+                    </motion.div>
+                    <h2 className="font-display text-xl font-bold text-destructive mb-2">
+                      Out of Moves!
+                    </h2>
+                    <p className="text-muted-foreground text-xs mb-5">
+                      Used all {maxMoves} moves
+                    </p>
+                    <button
+                      onClick={retry}
+                      className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-sm font-bold px-6 py-3 rounded-xl hover:bg-secondary/80 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" /> RETRY
+                    </button>
+                  </>
+                )}
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
