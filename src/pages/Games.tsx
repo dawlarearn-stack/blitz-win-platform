@@ -12,9 +12,9 @@ const games = [
   { id: "color-match", name: "Color Match", icon: Palette, color: "text-accent", desc: "Match the displayed color, not the word" },
   { id: "speed-type", name: "Speed Type", icon: Keyboard, color: "text-primary", desc: "Type words as fast as you can" },
   { id: "pattern-memory", name: "Pattern Memory", icon: Grid3X3, color: "text-accent", desc: "Remember and repeat the pattern" },
-  { id: "coin-flip", name: "Coin Flip", icon: CircleDot, color: "text-primary", desc: "Predict coin flips in a streak" },
+  { id: "number-sequence", name: "Number Sequence", icon: Hash, color: "text-primary", desc: "Find the next number in the pattern" },
   { id: "dice-roll", name: "Dice Roll", icon: Dice1, color: "text-accent", desc: "Predict dice totals: high, low, or seven" },
-  { id: "emoji-hunt", name: "Emoji Hunt", icon: Search, color: "text-primary", desc: "Find the odd emoji in the grid" },
+  { id: "whack-a-mole", name: "Whack-a-Mole", icon: Rat, color: "text-primary", desc: "Tap the moles before they disappear" },
 ];
 
 const MAX_LEVEL = 100;

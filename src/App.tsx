@@ -41,6 +41,7 @@ const App = () => (
           <Route path="/games/pattern-memory" element={<PatternMemory />} />
           <Route path="/games/number-sequence" element={<NumberSequence />} />
           <Route path="/games/dice-roll" element={<DiceRoll />} />
+          <Route path="/games/whack-a-mole" element={<WhackAMole />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
