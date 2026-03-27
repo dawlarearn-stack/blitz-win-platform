@@ -268,15 +268,6 @@ const MemoryMatch = () => {
           })}
         </div>
 
-        {/* Restart button */}
-        <div className="flex justify-center">
-          <button
-            onClick={retry}
-            className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> RESTART
-          </button>
-        </div>
 
         {/* Win / Lose Overlay */}
         <AnimatePresence>
