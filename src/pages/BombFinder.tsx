@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bomb, RotateCcw, ArrowRight, Sparkles, Star, Zap } from "lucide-react";
+import { Bomb, RotateCcw, ArrowRight, Sparkles, Star, Zap, X } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 
@@ -8,12 +8,38 @@ const COLS = 6;
 const ROWS = 5;
 const TOTAL_CELLS = COLS * ROWS;
 
-function getBombCount(level: number): number {
-  if (level <= 1) return 3;
-  if (level <= 10) return Math.round(3 + ((level - 1) / 9) * 3);
-  if (level <= 20) return Math.round(6 + ((level - 10) / 10) * 3);
-  if (level <= 50) return Math.round(9 + ((level - 20) / 30) * 6);
-  return Math.round(15 + ((level - 50) / 50) * 10);
+function getLevelConfig(level: number): { bombs: number; safeTarget: number } {
+  let bombs: number;
+  let safeTarget: number;
+
+  if (level <= 5) {
+    bombs = 3;
+    safeTarget = 8;
+  } else if (level <= 10) {
+    bombs = Math.round(3 + ((level - 5) / 5) * 3);
+    safeTarget = 8;
+  } else if (level <= 20) {
+    bombs = Math.round(6 + ((level - 10) / 10) * 3);
+    safeTarget = 7;
+  } else if (level <= 40) {
+    bombs = Math.round(9 + ((level - 20) / 20) * 4);
+    safeTarget = 7;
+  } else if (level <= 60) {
+    bombs = Math.round(13 + ((level - 40) / 20) * 4);
+    safeTarget = 6;
+  } else if (level <= 80) {
+    bombs = Math.round(17 + ((level - 60) / 20) * 4);
+    safeTarget = 5;
+  } else if (level <= 90) {
+    bombs = Math.round(21 + ((level - 80) / 10) * 2);
+    safeTarget = 5;
+  } else {
+    bombs = Math.round(23 + ((level - 90) / 10) * 2);
+    safeTarget = 4;
+  }
+
+  bombs = Math.min(bombs, TOTAL_CELLS - 2);
+  return { bombs, safeTarget };
 }
 
 function getPointsForLevel(level: number): number {
@@ -29,8 +55,7 @@ function getPointsForLevel(level: number): number {
 type Cell = { id: number; isBomb: boolean; revealed: boolean };
 type GameState = "playing" | "won" | "lost";
 
-function generateGrid(level: number): Cell[] {
-  const bombs = getBombCount(level);
+function generateGrid(bombs: number): Cell[] {
   const indices = Array.from({ length: TOTAL_CELLS }, (_, i) => i);
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -48,16 +73,12 @@ const BombFinder = () => {
   const { data, addPoints, updateProgress } = useGameStore();
   const progress = data.progress["bomb-finder"];
   const [level, setLevel] = useState(progress?.currentLevel ? progress.currentLevel + 1 : 1);
-  const [grid, setGrid] = useState<Cell[]>(() => generateGrid(level));
+
+  const config = useMemo(() => getLevelConfig(level), [level]);
+  const [grid, setGrid] = useState<Cell[]>(() => generateGrid(config.bombs));
   const [gameState, setGameState] = useState<GameState>("playing");
   const [earnedPoints, setEarnedPoints] = useState(0);
-  const [particles, setParticles] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [explosions, setExplosions] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [pointPopups, setPointPopups] = useState<{ id: number; x: number; y: number }[]>([]);
-
-  const bombCount = useMemo(() => getBombCount(level), [level]);
-  const safeCount = TOTAL_CELLS - bombCount;
-  const revealedSafe = useMemo(() => grid.filter((c) => c.revealed && !c.isBomb).length, [grid]);
+  const [safeClicked, setSafeClicked] = useState(0);
 
   const getCellPosition = (cellId: number) => {
     const col = cellId % COLS;
@@ -65,24 +86,20 @@ const BombFinder = () => {
     return { x: (col / COLS) * 100 + 8, y: (row / ROWS) * 100 + 10 };
   };
 
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [explosions, setExplosions] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [pointPopups, setPointPopups] = useState<{ id: number; x: number; y: number }[]>([]);
+
   const spawnParticles = useCallback((cellId: number) => {
     const pos = getCellPosition(cellId);
-    const newP = Array.from({ length: 8 }, (_, i) => ({
-      id: Date.now() + i,
-      x: pos.x,
-      y: pos.y,
-    }));
+    const newP = Array.from({ length: 8 }, (_, i) => ({ id: Date.now() + i, x: pos.x, y: pos.y }));
     setParticles((p) => [...p, ...newP]);
     setTimeout(() => setParticles((p) => p.filter((pp) => !newP.find((np) => np.id === pp.id))), 900);
   }, []);
 
   const spawnExplosion = useCallback((cellId: number) => {
     const pos = getCellPosition(cellId);
-    const newE = Array.from({ length: 12 }, (_, i) => ({
-      id: Date.now() + i + 100,
-      x: pos.x,
-      y: pos.y,
-    }));
+    const newE = Array.from({ length: 12 }, (_, i) => ({ id: Date.now() + i + 100, x: pos.x, y: pos.y }));
     setExplosions((e) => [...e, ...newE]);
     setTimeout(() => setExplosions((e) => e.filter((ee) => !newE.find((ne) => ne.id === ee.id))), 1000);
   }, []);
@@ -109,8 +126,9 @@ const BombFinder = () => {
     } else {
       spawnParticles(cell.id);
       spawnPointPopup(cell.id);
-      const newRevealed = next.filter((c) => c.revealed && !c.isBomb).length;
-      if (newRevealed === safeCount) {
+      const newSafe = safeClicked + 1;
+      setSafeClicked(newSafe);
+      if (newSafe >= config.safeTarget) {
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
         addPoints(pts);
@@ -120,21 +138,13 @@ const BombFinder = () => {
     }
   };
 
-  const retry = () => {
-    setGrid(generateGrid(level));
+  const resetGame = (newLevel: number) => {
+    const cfg = getLevelConfig(newLevel);
+    setLevel(newLevel);
+    setGrid(generateGrid(cfg.bombs));
     setGameState("playing");
     setEarnedPoints(0);
-    setParticles([]);
-    setExplosions([]);
-    setPointPopups([]);
-  };
-
-  const nextLevel = () => {
-    const n = Math.min(level + 1, 100);
-    setLevel(n);
-    setGrid(generateGrid(n));
-    setGameState("playing");
-    setEarnedPoints(0);
+    setSafeClicked(0);
     setParticles([]);
     setExplosions([]);
     setPointPopups([]);
@@ -161,11 +171,11 @@ const BombFinder = () => {
         <div className="flex justify-between text-[10px] text-muted-foreground mb-3 font-display px-1">
           <span className="flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-primary" />
-            <span className="text-primary">{revealedSafe}</span>/{safeCount} Safe
+            <span className="text-primary">{safeClicked}</span>/{config.safeTarget} Safe
           </span>
           <span className="flex items-center gap-1">
             <Bomb className="w-3 h-3 text-destructive" />
-            {bombCount} Bombs
+            {config.bombs} Bombs
           </span>
           <span className="flex items-center gap-1">
             <Zap className="w-3 h-3 text-accent" />
@@ -184,8 +194,8 @@ const BombFinder = () => {
               return (
                 <motion.button
                   key={cell.id}
-                  whileHover={isUnrevealed && gameState === "playing" ? { scale: 1.08, y: -2 } : undefined}
-                  whileTap={isUnrevealed && gameState === "playing" ? { scale: 0.92 } : undefined}
+                  whileHover={isUnrevealed && gameState === "playing" ? { scale: 1.1, y: -3 } : undefined}
+                  whileTap={isUnrevealed && gameState === "playing" ? { scale: 0.9 } : undefined}
                   onClick={() => handleClick(cell)}
                   disabled={cell.revealed || gameState !== "playing"}
                   className="relative aspect-square rounded-xl flex items-center justify-center transition-all duration-200"
@@ -207,13 +217,10 @@ const BombFinder = () => {
                       : "1px solid hsl(185 100% 50% / 0.4)",
                   }}
                 >
-                  {/* 3D highlight edge */}
                   {isUnrevealed && (
                     <div
                       className="absolute inset-0 rounded-xl pointer-events-none"
-                      style={{
-                        background: "linear-gradient(135deg, hsl(230 15% 25% / 0.5) 0%, transparent 50%)",
-                      }}
+                      style={{ background: "linear-gradient(135deg, hsl(230 15% 25% / 0.5) 0%, transparent 50%)" }}
                     />
                   )}
 
@@ -224,7 +231,7 @@ const BombFinder = () => {
                         animate={{ scale: [0, 1.4, 1], rotate: 0 }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
                       >
-                        <Bomb className="w-4 h-4 text-destructive drop-shadow-[0_0_10px_hsl(0_85%_55%/0.9)]" />
+                        <Bomb className="w-7 h-7 text-destructive drop-shadow-[0_0_14px_hsl(0_85%_55%/0.9)]" />
                       </motion.div>
                     )}
                     {isSafeRevealed && (
@@ -233,7 +240,7 @@ const BombFinder = () => {
                         animate={{ scale: [0, 1.5, 1] }}
                         transition={{ duration: 0.35, ease: "easeOut" }}
                       >
-                        <Sparkles className="w-4 h-4 text-primary drop-shadow-[0_0_10px_hsl(185_100%_50%/0.9)]" />
+                        <Sparkles className="w-7 h-7 text-primary drop-shadow-[0_0_14px_hsl(185_100%_50%/0.9)]" />
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -242,15 +249,14 @@ const BombFinder = () => {
             })}
           </div>
 
-          {/* Particles (safe click) */}
+          {/* Particles */}
           <AnimatePresence>
             {particles.map((p) => (
               <motion.div
                 key={p.id}
                 initial={{ opacity: 1, scale: 1, x: `${p.x}%`, y: `${p.y}%` }}
                 animate={{
-                  opacity: 0,
-                  scale: 0.3,
+                  opacity: 0, scale: 0.3,
                   x: `${p.x + (Math.random() - 0.5) * 40}%`,
                   y: `${p.y - 15 - Math.random() * 25}%`,
                 }}
@@ -261,15 +267,14 @@ const BombFinder = () => {
             ))}
           </AnimatePresence>
 
-          {/* Explosion particles (bomb click) */}
+          {/* Explosions */}
           <AnimatePresence>
             {explosions.map((e) => (
               <motion.div
                 key={e.id}
                 initial={{ opacity: 1, scale: 1, x: `${e.x}%`, y: `${e.y}%` }}
                 animate={{
-                  opacity: 0,
-                  scale: 0,
+                  opacity: 0, scale: 0,
                   x: `${e.x + (Math.random() - 0.5) * 60}%`,
                   y: `${e.y + (Math.random() - 0.5) * 60}%`,
                 }}
@@ -292,10 +297,7 @@ const BombFinder = () => {
                 animate={{ opacity: 0, y: -40, scale: 1 }}
                 transition={{ duration: 0.9, ease: "easeOut" }}
                 className="absolute font-display text-xs font-black text-accent pointer-events-none"
-                style={{
-                  top: `${p.y}%`,
-                  textShadow: "0 0 8px hsl(320 100% 60% / 0.8)",
-                }}
+                style={{ top: `${p.y}%`, textShadow: "0 0 8px hsl(320 100% 60% / 0.8)" }}
               >
                 +{getPointsForLevel(level)}
               </motion.span>
@@ -303,67 +305,80 @@ const BombFinder = () => {
           </AnimatePresence>
         </div>
 
-        {/* Game Over / Win Overlay */}
+        {/* Overlay Popup for Win / Lose */}
         <AnimatePresence>
           {gameState !== "playing" && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.85, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: "spring", damping: 18, stiffness: 200 }}
-              className="gradient-card rounded-2xl neon-border p-6 text-center mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
             >
-              {gameState === "won" ? (
-                <>
-                  <motion.div
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Star className="w-8 h-8 text-accent mx-auto mb-2 drop-shadow-[0_0_12px_hsl(320_100%_60%/0.6)]" />
-                  </motion.div>
-                  <h2 className="font-display text-lg font-bold text-primary neon-text mb-1">
-                    Level {level} Clear!
-                  </h2>
-                  <motion.p
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                    className="font-display text-3xl font-black text-accent neon-text-accent mb-4"
-                  >
-                    +{earnedPoints} pts
-                  </motion.p>
-                  <button
-                    onClick={nextLevel}
-                    className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-6 py-3 rounded-xl neon-glow hover:scale-105 transition-transform"
-                  >
-                    {level < 100 ? (
-                      <>NEXT LEVEL <ArrowRight className="w-4 h-4" /></>
-                    ) : (
-                      "🏆 MAX LEVEL!"
-                    )}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <motion.div
-                    initial={{ scale: 2, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", damping: 10 }}
-                    className="text-4xl mb-2"
-                  >
-                    💥
-                  </motion.div>
-                  <h2 className="font-display text-lg font-bold text-destructive mb-1">Boom!</h2>
-                  <p className="text-muted-foreground text-xs mb-4">You hit a bomb. Try again!</p>
-                  <button
-                    onClick={retry}
-                    className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-sm font-bold px-6 py-3 rounded-xl hover:bg-secondary/80 transition-colors neon-border"
-                  >
-                    <RotateCcw className="w-4 h-4" /> RETRY
-                  </button>
-                </>
-              )}
+              <motion.div
+                initial={{ scale: 0.7, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.7, opacity: 0 }}
+                transition={{ type: "spring", damping: 20, stiffness: 250 }}
+                className="gradient-card rounded-2xl neon-border p-8 text-center mx-4 max-w-xs w-full relative"
+              >
+                {gameState === "won" ? (
+                  <>
+                    <motion.div
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <Star className="w-12 h-12 text-accent mx-auto mb-3 drop-shadow-[0_0_16px_hsl(320_100%_60%/0.6)]" />
+                    </motion.div>
+                    <h2 className="font-display text-xl font-bold text-primary neon-text mb-1">
+                      Level {level} Clear!
+                    </h2>
+                    <p className="text-muted-foreground text-xs mb-2">
+                      {safeClicked}/{config.safeTarget} safe cells found
+                    </p>
+                    <motion.p
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                      className="font-display text-4xl font-black text-accent neon-text-accent mb-6"
+                    >
+                      +{earnedPoints} pts
+                    </motion.p>
+                    <button
+                      onClick={() => resetGame(Math.min(level + 1, 100))}
+                      className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-8 py-3 rounded-xl neon-glow hover:scale-105 transition-transform w-full justify-center"
+                    >
+                      {level < 100 ? (
+                        <>NEXT LEVEL <ArrowRight className="w-4 h-4" /></>
+                      ) : (
+                        "🏆 MAX LEVEL!"
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <motion.div
+                      initial={{ scale: 2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", damping: 10 }}
+                      className="text-5xl mb-3"
+                    >
+                      💥
+                    </motion.div>
+                    <h2 className="font-display text-xl font-bold text-destructive mb-1">Boom!</h2>
+                    <p className="text-muted-foreground text-xs mb-2">
+                      {safeClicked}/{config.safeTarget} safe — so close!
+                    </p>
+                    <p className="text-muted-foreground text-[10px] mb-6">You hit a bomb. Try again!</p>
+                    <button
+                      onClick={() => resetGame(level)}
+                      className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-sm font-bold px-8 py-3 rounded-xl hover:bg-secondary/80 transition-colors neon-border w-full justify-center"
+                    >
+                      <RotateCcw className="w-4 h-4" /> RETRY
+                    </button>
+                  </>
+                )}
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
