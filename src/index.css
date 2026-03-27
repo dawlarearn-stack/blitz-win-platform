@@ -6,51 +6,51 @@
 
 @layer base {
   :root {
-    --background: 220 20% 6%;
-    --foreground: 180 10% 92%;
+    --background: 230 25% 4%;
+    --foreground: 200 20% 95%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 180 10% 92%;
+    --card: 230 20% 8%;
+    --card-foreground: 200 20% 95%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 180 10% 92%;
+    --popover: 230 20% 8%;
+    --popover-foreground: 200 20% 95%;
 
-    --primary: 145 80% 48%;
-    --primary-foreground: 220 20% 6%;
+    --primary: 185 100% 50%;
+    --primary-foreground: 230 25% 4%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 180 10% 92%;
+    --secondary: 230 20% 14%;
+    --secondary-foreground: 200 20% 90%;
 
-    --muted: 220 15% 14%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 230 18% 12%;
+    --muted-foreground: 220 15% 50%;
 
-    --accent: 270 70% 60%;
+    --accent: 320 100% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 0 85% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 145 80% 48%;
+    --border: 230 20% 15%;
+    --input: 230 20% 15%;
+    --ring: 185 100% 50%;
 
     --radius: 0.75rem;
 
-    --neon-glow: 0 0 20px hsl(145 80% 48% / 0.4), 0 0 60px hsl(145 80% 48% / 0.1);
-    --neon-glow-accent: 0 0 20px hsl(270 70% 60% / 0.4), 0 0 60px hsl(270 70% 60% / 0.1);
-    --gradient-primary: linear-gradient(135deg, hsl(145 80% 48%), hsl(160 80% 40%));
-    --gradient-accent: linear-gradient(135deg, hsl(270 70% 60%), hsl(300 70% 50%));
-    --gradient-card: linear-gradient(145deg, hsl(220 18% 12%), hsl(220 18% 8%));
-    --gradient-hero: linear-gradient(180deg, hsl(220 20% 8%) 0%, hsl(220 25% 4%) 100%);
+    --neon-glow: 0 0 8px hsl(185 100% 50% / 0.6), 0 0 30px hsl(185 100% 50% / 0.25), 0 0 80px hsl(185 100% 50% / 0.08);
+    --neon-glow-accent: 0 0 8px hsl(320 100% 60% / 0.6), 0 0 30px hsl(320 100% 60% / 0.25), 0 0 80px hsl(320 100% 60% / 0.08);
+    --gradient-primary: linear-gradient(135deg, hsl(185 100% 50%), hsl(195 100% 42%));
+    --gradient-accent: linear-gradient(135deg, hsl(320 100% 60%), hsl(280 100% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(230 20% 10%), hsl(230 25% 5%));
+    --gradient-hero: linear-gradient(180deg, hsl(230 25% 6%) 0%, hsl(230 30% 2%) 100%);
 
-    --sidebar-background: 220 18% 10%;
-    --sidebar-foreground: 180 10% 92%;
-    --sidebar-primary: 145 80% 48%;
-    --sidebar-primary-foreground: 220 20% 6%;
-    --sidebar-accent: 220 15% 16%;
-    --sidebar-accent-foreground: 180 10% 92%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 145 80% 48%;
+    --sidebar-background: 230 20% 8%;
+    --sidebar-foreground: 200 20% 95%;
+    --sidebar-primary: 185 100% 50%;
+    --sidebar-primary-foreground: 230 25% 4%;
+    --sidebar-accent: 230 20% 14%;
+    --sidebar-accent-foreground: 200 20% 90%;
+    --sidebar-border: 230 20% 15%;
+    --sidebar-ring: 185 100% 50%;
   }
 }
 
@@ -61,6 +61,9 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, hsl(185 100% 50% / 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(320 100% 60% / 0.03) 0%, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -76,10 +79,10 @@
     box-shadow: var(--neon-glow-accent);
   }
   .neon-text {
-    text-shadow: 0 0 10px hsl(145 80% 48% / 0.6), 0 0 30px hsl(145 80% 48% / 0.2);
+    text-shadow: 0 0 7px hsl(185 100% 50% / 0.8), 0 0 20px hsl(185 100% 50% / 0.4), 0 0 40px hsl(185 100% 50% / 0.15);
   }
   .neon-text-accent {
-    text-shadow: 0 0 10px hsl(270 70% 60% / 0.6), 0 0 30px hsl(270 70% 60% / 0.2);
+    text-shadow: 0 0 7px hsl(320 100% 60% / 0.8), 0 0 20px hsl(320 100% 60% / 0.4), 0 0 40px hsl(320 100% 60% / 0.15);
   }
   .gradient-primary {
     background: var(--gradient-primary);
@@ -91,9 +94,13 @@
     background: var(--gradient-card);
   }
   .glass {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50;
+    @apply bg-card/50 backdrop-blur-2xl border border-border/40;
   }
   .game-grid-cell {
     @apply aspect-square rounded-lg border border-border/50 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105;
+  }
+  .neon-border {
+    border: 1px solid hsl(185 100% 50% / 0.3);
+    box-shadow: inset 0 0 20px hsl(185 100% 50% / 0.05), 0 0 15px hsl(185 100% 50% / 0.1);
   }
 }
