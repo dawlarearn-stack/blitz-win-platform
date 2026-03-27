@@ -13,9 +13,6 @@ const games = [
   { id: "pattern-memory", name: "Pattern Memory", icon: Grid3X3, color: "text-accent", desc: "Remember and repeat the pattern", available: true },
   { id: "coin-flip", name: "Coin Flip", icon: CircleDot, color: "text-primary", desc: "Predict coin flips in a streak", available: true },
   { id: "dice-roll", name: "Dice Roll", icon: Dice1, color: "text-accent", desc: "Predict dice totals: high, low, or seven", available: true },
-  { id: "emoji-hunt", name: "Emoji Hunt", icon: Search, color: "text-primary", desc: "Find the odd emoji in the grid", available: true },
-  { id: "quick-math", name: "Quick Math", icon: Calculator, color: "text-accent", desc: "Solve math problems against the clock", available: true },
-  { id: "word-scramble", name: "Word Scramble", icon: Type, color: "text-primary", desc: "Unscramble jumbled words", available: true },
 ];
 
 const Games = () => {
