@@ -22,7 +22,7 @@ function getPairCount(level: number): number {
 }
 
 function getMaxMoves(_level: number, pairs: number): number {
-  return pairs * 2;
+  return pairs * 3;
 }
 
 function getPointsForLevel(level: number): number {
