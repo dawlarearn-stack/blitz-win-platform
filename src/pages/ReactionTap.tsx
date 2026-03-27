@@ -196,6 +196,7 @@ const ReactionTap = () => {
     addEffect(target.x, target.y, "hit");
     addParticles(target.x, target.y);
     setHits((h) => h + 1);
+    hitsRef.current += 1;
 
     // Respawn target at new position
     const newTarget = spawnTarget();
