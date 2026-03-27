@@ -21,10 +21,8 @@ function getPairCount(level: number): number {
   return Math.min(15 + Math.floor((level - 49) * 0.2), 25); // ~15→25
 }
 
-function getMaxMoves(level: number, pairs: number): number {
-  const base = pairs * 3;
-  const reduction = Math.floor(level * 0.15);
-  return Math.max(base - reduction, pairs + Math.ceil(pairs * 0.5));
+function getMaxMoves(_level: number, pairs: number): number {
+  return pairs * 2;
 }
 
 function getPointsForLevel(level: number): number {
