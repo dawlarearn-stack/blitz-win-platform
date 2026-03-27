@@ -21,10 +21,8 @@ function getPairCount(level: number): number {
   return Math.min(15 + Math.floor((level - 49) * 0.2), 25); // ~15→25
 }
 
-function getMaxMoves(level: number, pairs: number): number {
-  const base = pairs * 3;
-  const reduction = Math.floor(level * 0.15);
-  return Math.max(base - reduction, pairs + Math.ceil(pairs * 0.5));
+function getMaxMoves(_level: number, pairs: number): number {
+  return pairs * 2;
 }
 
 function getPointsForLevel(level: number): number {
@@ -270,15 +268,6 @@ const MemoryMatch = () => {
           })}
         </div>
 
-        {/* Restart button */}
-        <div className="flex justify-center">
-          <button
-            onClick={retry}
-            className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> RESTART
-          </button>
-        </div>
 
         {/* Win / Lose Overlay */}
         <AnimatePresence>
