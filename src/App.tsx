@@ -13,8 +13,9 @@ import LuckyBox from "./pages/LuckyBox";
 import ColorMatch from "./pages/ColorMatch";
 import SpeedType from "./pages/SpeedType";
 import PatternMemory from "./pages/PatternMemory";
-import CoinFlip from "./pages/CoinFlip";
+import NumberSequence from "./pages/NumberSequence";
 import DiceRoll from "./pages/DiceRoll";
+import WhackAMole from "./pages/WhackAMole";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
