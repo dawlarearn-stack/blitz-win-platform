@@ -101,6 +101,7 @@ const ReactionTap = () => {
     cleanup();
     setGameState("playing");
     setHits(0);
+    hitsRef.current = 0;
     setMisses(0);
     setTimeLeft(TIME_LIMIT);
     setEarnedPoints(0);
