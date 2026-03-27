@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bomb, RotateCcw, ArrowRight, Sparkles, Star, Zap, X } from "lucide-react";
+import { Bomb, RotateCcw, ArrowRight, Sparkles, Star, Zap } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
+import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 
 const COLS = 6;
 const ROWS = 5;
