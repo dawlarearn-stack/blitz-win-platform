@@ -15,6 +15,7 @@ import SpeedType from "./pages/SpeedType";
 import PatternMemory from "./pages/PatternMemory";
 import CoinFlip from "./pages/CoinFlip";
 import DiceRoll from "./pages/DiceRoll";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/games" element={<Games />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/games/bomb-finder" element={<BombFinder />} />
           <Route path="/games/memory-match" element={<MemoryMatch />} />
           <Route path="/games/reaction-tap" element={<ReactionTap />} />

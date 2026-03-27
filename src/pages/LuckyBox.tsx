@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Gift, Package } from "lucide-react";
+import { ArrowRight, Gift } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
@@ -305,7 +305,7 @@ const LuckyBox = () => {
                         </motion.span>
                       ) : (
                         <motion.span key="hidden">
-                          <Package className="w-6 h-6 sm:w-7 sm:h-7 text-primary/40" />
+                          <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-primary/40" />
                         </motion.span>
                       )}
                     </AnimatePresence>
