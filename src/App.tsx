@@ -15,9 +15,6 @@ import SpeedType from "./pages/SpeedType";
 import PatternMemory from "./pages/PatternMemory";
 import CoinFlip from "./pages/CoinFlip";
 import DiceRoll from "./pages/DiceRoll";
-import EmojiHunt from "./pages/EmojiHunt";
-import QuickMath from "./pages/QuickMath";
-import WordScramble from "./pages/WordScramble";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
