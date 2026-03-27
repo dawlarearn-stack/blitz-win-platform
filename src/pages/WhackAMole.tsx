@@ -221,11 +221,23 @@ const WhackAMole = () => {
                     <AnimatePresence>
                       {moleType && (
                         <motion.span
-                          initial={{ y: 20, opacity: 0, scale: 0.5 }}
-                          animate={{ y: 0, opacity: 1, scale: 1 }}
-                          exit={{ y: 20, opacity: 0, scale: 0.5 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                          className="absolute"
+                          initial={{ y: 30, opacity: 0, scale: 0.2, rotate: -20 }}
+                          animate={{ 
+                            y: [0, -4, 0], 
+                            opacity: 1, 
+                            scale: 1, 
+                            rotate: [0, 3, -3, 0],
+                          }}
+                          exit={{ y: 25, opacity: 0, scale: 0.3, rotate: 15 }}
+                          transition={{ 
+                            type: "spring", 
+                            stiffness: 500, 
+                            damping: 12,
+                            y: { repeat: Infinity, duration: 0.8, ease: "easeInOut" },
+                            rotate: { repeat: Infinity, duration: 1.2, ease: "easeInOut" },
+                          }}
+                          className="absolute text-4xl md:text-5xl drop-shadow-lg"
+                          style={{ filter: moleType === "bad" ? "drop-shadow(0 0 8px hsl(var(--destructive)))" : "drop-shadow(0 0 8px hsl(var(--primary) / 0.6))" }}
                         >
                           {moleType === "good" ? MOLE_EMOJI : BAD_MOLE_EMOJI}
                         </motion.span>
