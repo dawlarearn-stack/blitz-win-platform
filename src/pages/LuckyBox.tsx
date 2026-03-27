@@ -305,7 +305,7 @@ const LuckyBox = () => {
                         </motion.span>
                       ) : (
                         <motion.span key="hidden">
-                          <Package className="w-6 h-6 sm:w-7 sm:h-7 text-primary/40" />
+                          <Gift className="w-6 h-6 sm:w-7 sm:h-7 text-primary/40" />
                         </motion.span>
                       )}
                     </AnimatePresence>
