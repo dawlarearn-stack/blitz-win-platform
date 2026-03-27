@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/games", icon: Gamepad2, label: "Games" },
+  { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
 ];
 

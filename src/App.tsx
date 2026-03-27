@@ -30,6 +30,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/games" element={<Games />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/games/bomb-finder" element={<BombFinder />} />
           <Route path="/games/memory-match" element={<MemoryMatch />} />
           <Route path="/games/reaction-tap" element={<ReactionTap />} />
