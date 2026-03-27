@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/games/color-match" element={<ColorMatch />} />
           <Route path="/games/speed-type" element={<SpeedType />} />
           <Route path="/games/pattern-memory" element={<PatternMemory />} />
-          <Route path="/games/coin-flip" element={<CoinFlip />} />
+          <Route path="/games/number-sequence" element={<NumberSequence />} />
           <Route path="/games/dice-roll" element={<DiceRoll />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
