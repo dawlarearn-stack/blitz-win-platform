@@ -16,8 +16,7 @@ function getLevelConfig(level: number) {
 }
 
 function getHitsNeeded(level: number): number {
-  const { targetCount } = getLevelConfig(level);
-  return targetCount * 3 + Math.floor(level / 5);
+  return 5 + Math.floor(level / 2);
 }
 
 function getPointsForLevel(level: number): number {
@@ -72,6 +71,7 @@ const ReactionTap = () => {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const targetsRef = useRef<Target[]>([]);
   const nextId = useRef(0);
+  const hitsRef = useRef(0);
   const config = getLevelConfig(level);
   const hitsNeeded = getHitsNeeded(level);
 
@@ -101,6 +101,7 @@ const ReactionTap = () => {
     cleanup();
     setGameState("playing");
     setHits(0);
+    hitsRef.current = 0;
     setMisses(0);
     setTimeLeft(TIME_LIMIT);
     setEarnedPoints(0);
@@ -132,9 +133,10 @@ const ReactionTap = () => {
       const size = getLevelConfig(level).size;
       const half = size / 2;
 
+      const speedMultiplier = 1 + hitsRef.current * 0.08;
       targetsRef.current = targetsRef.current.map((t) => {
-        let nx = t.x + t.dx * dt;
-        let ny = t.y + t.dy * dt;
+        let nx = t.x + t.dx * speedMultiplier * dt;
+        let ny = t.y + t.dy * speedMultiplier * dt;
         let ndx = t.dx;
         let ndy = t.dy;
         if (nx < half || nx > ARENA_SIZE - half) { ndx = -ndx; nx = Math.max(half, Math.min(ARENA_SIZE - half, nx)); }
@@ -194,6 +196,7 @@ const ReactionTap = () => {
     addEffect(target.x, target.y, "hit");
     addParticles(target.x, target.y);
     setHits((h) => h + 1);
+    hitsRef.current += 1;
 
     // Respawn target at new position
     const newTarget = spawnTarget();
