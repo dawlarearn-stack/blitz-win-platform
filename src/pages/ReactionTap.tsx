@@ -133,9 +133,10 @@ const ReactionTap = () => {
       const size = getLevelConfig(level).size;
       const half = size / 2;
 
+      const speedMultiplier = 1 + hitsRef.current * 0.08;
       targetsRef.current = targetsRef.current.map((t) => {
-        let nx = t.x + t.dx * dt;
-        let ny = t.y + t.dy * dt;
+        let nx = t.x + t.dx * speedMultiplier * dt;
+        let ny = t.y + t.dy * speedMultiplier * dt;
         let ndx = t.dx;
         let ndy = t.dy;
         if (nx < half || nx > ARENA_SIZE - half) { ndx = -ndx; nx = Math.max(half, Math.min(ARENA_SIZE - half, nx)); }
