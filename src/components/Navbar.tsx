@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Gamepad2, Home, LayoutDashboard, Coins } from "lucide-react";
+import { Gamepad2, Home, LayoutDashboard, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
