@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bomb, Brain, Zap, Gift, Palette, Keyboard, Grid3X3, CircleDot, Dice1, Search, Calculator, Type } from "lucide-react";
+import { Bomb, Brain, Zap, Gift, Palette, Keyboard, Grid3X3, CircleDot, Dice1 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const games = [
