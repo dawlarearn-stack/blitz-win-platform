@@ -8,6 +8,13 @@ import Games from "./pages/Games";
 import Dashboard from "./pages/Dashboard";
 import BombFinder from "./pages/BombFinder";
 import MemoryMatch from "./pages/MemoryMatch";
+import ReactionTap from "./pages/ReactionTap";
+import LuckyBox from "./pages/LuckyBox";
+import ColorMatch from "./pages/ColorMatch";
+import SpeedType from "./pages/SpeedType";
+import PatternMemory from "./pages/PatternMemory";
+import CoinFlip from "./pages/CoinFlip";
+import DiceRoll from "./pages/DiceRoll";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +31,13 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/games/bomb-finder" element={<BombFinder />} />
           <Route path="/games/memory-match" element={<MemoryMatch />} />
+          <Route path="/games/reaction-tap" element={<ReactionTap />} />
+          <Route path="/games/lucky-box" element={<LuckyBox />} />
+          <Route path="/games/color-match" element={<ColorMatch />} />
+          <Route path="/games/speed-type" element={<SpeedType />} />
+          <Route path="/games/pattern-memory" element={<PatternMemory />} />
+          <Route path="/games/coin-flip" element={<CoinFlip />} />
+          <Route path="/games/dice-roll" element={<DiceRoll />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
