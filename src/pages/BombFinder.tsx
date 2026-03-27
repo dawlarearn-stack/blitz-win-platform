@@ -112,12 +112,15 @@ const BombFinder = () => {
     setGrid(next);
 
     if (cell.isBomb) {
+      playClickBomb();
       spawnExplosion(cell.id);
       setTimeout(() => {
         setGrid(next.map((c) => (c.isBomb ? { ...c, revealed: true } : c)));
+        playGameOver();
       }, 300);
       setGameState("lost");
     } else {
+      playClickSafe();
       spawnParticles(cell.id);
       spawnPointPopup(cell.id);
       const newSafe = safeClicked + 1;
@@ -128,6 +131,7 @@ const BombFinder = () => {
         addPoints(pts);
         updateProgress("bomb-finder", level);
         setGameState("won");
+        playLevelWin();
       }
     }
   };
