@@ -18,7 +18,7 @@ const Navbar = () => {
       <nav className="hidden md:flex fixed top-0 w-full z-50 glass border-b border-border/50">
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <Coins className="w-7 h-7 text-primary" />
+            <Gamepad2 className="w-7 h-7 text-primary" />
             <span className="font-display text-lg font-bold text-foreground">
               PGR <span className="text-primary">Play & Earn</span>
             </span>
