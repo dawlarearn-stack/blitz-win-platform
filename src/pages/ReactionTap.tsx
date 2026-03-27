@@ -16,8 +16,7 @@ function getLevelConfig(level: number) {
 }
 
 function getHitsNeeded(level: number): number {
-  const { targetCount } = getLevelConfig(level);
-  return targetCount * 3 + Math.floor(level / 5);
+  return 5 + Math.floor(level / 2);
 }
 
 function getPointsForLevel(level: number): number {
