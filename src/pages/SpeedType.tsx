@@ -109,7 +109,7 @@ const SpeedType = () => {
   const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Speed Type" level={level} points={data.points}>
+    <GameLayout title="Speed Type" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

@@ -168,6 +168,7 @@ const LuckyBox = () => {
   }, [boxes, gameState, picksLeft, level, totalRoundPoints, addPoints, updateProgress]);
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setBoxes(generateBoxes(next));

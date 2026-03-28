@@ -179,7 +179,7 @@ const WhackAMole = () => {
   const cols = gridSize <= 9 ? 3 : 4;
 
   return (
-    <GameLayout title="Whack-a-Mole" level={level} points={data.points}>
+    <GameLayout title="Whack-a-Mole" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" ? (
           <div className="text-center py-12">
