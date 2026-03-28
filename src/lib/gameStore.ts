@@ -13,6 +13,7 @@ export interface GameProgress {
 
 export interface UserData {
   points: number;
+  energy: number;
   gamesPlayed: number;
   progress: Record<string, GameProgress>;
 }
