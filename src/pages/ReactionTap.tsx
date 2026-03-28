@@ -219,11 +219,12 @@ const ReactionTap = () => {
   };
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     setLevel((l) => Math.min(l + 1, 100));
     setGameState("idle");
   };
 
-  const retry = () => setGameState("idle");
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
     <GameLayout title="Reaction Tap" level={level} points={data.points}>
