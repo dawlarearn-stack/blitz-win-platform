@@ -98,6 +98,7 @@ const ReactionTap = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     cleanup();
     setGameState("playing");
     setHits(0);
