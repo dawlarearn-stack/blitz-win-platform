@@ -61,7 +61,27 @@ export function useGameStore() {
     });
   }, []);
 
-  return { data, addPoints, updateProgress };
+  const addEnergy = useCallback((amount: number) => {
+    setData((prev) => {
+      const next = { ...prev, energy: prev.energy + amount };
+      saveData(next);
+      return next;
+    });
+  }, []);
+
+  const spendPoints = useCallback((amount: number): boolean => {
+    let success = false;
+    setData((prev) => {
+      if (prev.points < amount) return prev;
+      success = true;
+      const next = { ...prev, points: prev.points - amount };
+      saveData(next);
+      return next;
+    });
+    return success;
+  }, []);
+
+  return { data, addPoints, addEnergy, spendPoints, updateProgress };
 }
 
 export function getPointsDollarValue(points: number): string {
