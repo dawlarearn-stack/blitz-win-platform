@@ -86,7 +86,7 @@ function generateSequence(level: number): { sequence: number[]; answer: number; 
 }
 
 const NumberSequence = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["number-sequence"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
