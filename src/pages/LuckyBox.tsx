@@ -101,6 +101,7 @@ const LuckyBox = () => {
   };
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setBoxes(generateBoxes(level));
     setPicksLeft(PICKS_PER_LEVEL);
     setGameState("playing");
@@ -108,7 +109,7 @@ const LuckyBox = () => {
     setTotalRoundPoints(0);
     setParticles([]);
     setLastRevealedIdx(null);
-  }, [level]);
+  }, [level, spendEnergy]);
 
   const handleOpen = useCallback((index: number) => {
     if (gameState !== "playing" || boxes[index].revealed || picksLeft <= 0) return;
