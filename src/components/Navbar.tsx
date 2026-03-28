@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Gamepad2, Home, LayoutDashboard, Trophy } from "lucide-react";
+import { Gamepad2, Home, LayoutDashboard, Trophy, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/games", icon: Gamepad2, label: "Games" },
-  { to: "/leaderboard", icon: Trophy, label: "Leaderboard" },
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/shop", icon: ShoppingCart, label: "Shop" },
+  { to: "/leaderboard", icon: Trophy, label: "Board" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Me" },
 ];
 
 const Navbar = () => {

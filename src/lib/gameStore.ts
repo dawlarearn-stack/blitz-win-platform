@@ -13,6 +13,7 @@ export interface GameProgress {
 
 export interface UserData {
   points: number;
+  energy: number;
   gamesPlayed: number;
   progress: Record<string, GameProgress>;
 }
@@ -22,7 +23,7 @@ function loadData(): UserData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { points: 0, gamesPlayed: 0, progress: {} };
+  return { points: 0, energy: 100, gamesPlayed: 0, progress: {} };
 }
 
 function saveData(data: UserData) {
@@ -60,7 +61,27 @@ export function useGameStore() {
     });
   }, []);
 
-  return { data, addPoints, updateProgress };
+  const addEnergy = useCallback((amount: number) => {
+    setData((prev) => {
+      const next = { ...prev, energy: prev.energy + amount };
+      saveData(next);
+      return next;
+    });
+  }, []);
+
+  const spendPoints = useCallback((amount: number): boolean => {
+    let success = false;
+    setData((prev) => {
+      if (prev.points < amount) return prev;
+      success = true;
+      const next = { ...prev, points: prev.points - amount };
+      saveData(next);
+      return next;
+    });
+    return success;
+  }, []);
+
+  return { data, addPoints, addEnergy, spendPoints, updateProgress };
 }
 
 export function getPointsDollarValue(points: number): string {

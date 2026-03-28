@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
 import Games from "./pages/Games";
 import Dashboard from "./pages/Dashboard";
+import Shop from "./pages/Shop";
 import BombFinder from "./pages/BombFinder";
 import MemoryMatch from "./pages/MemoryMatch";
 import ReactionTap from "./pages/ReactionTap";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/games" element={<Games />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/shop" element={<Shop />} />
           <Route path="/games/bomb-finder" element={<BombFinder />} />
           <Route path="/games/memory-match" element={<MemoryMatch />} />
           <Route path="/games/reaction-tap" element={<ReactionTap />} />
