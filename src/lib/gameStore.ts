@@ -82,7 +82,19 @@ export function useGameStore() {
     return success;
   }, []);
 
-  return { data, addPoints, addEnergy, spendPoints, updateProgress };
+  const spendEnergy = useCallback((amount: number = 1): boolean => {
+    let success = false;
+    setData((prev) => {
+      if (prev.energy < amount) return prev;
+      success = true;
+      const next = { ...prev, energy: prev.energy - amount };
+      saveData(next);
+      return next;
+    });
+    return success;
+  }, []);
+
+  return { data, addPoints, addEnergy, spendPoints, spendEnergy, updateProgress };
 }
 
 export function getPointsDollarValue(points: number): string {
