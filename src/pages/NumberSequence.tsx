@@ -178,7 +178,7 @@ const NumberSequence = () => {
   };
 
   return (
-    <GameLayout title="Number Sequence" level={level} points={data.points}>
+    <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Solved: <span className="text-primary font-bold">{correct}/{roundsNeeded}</span></span>

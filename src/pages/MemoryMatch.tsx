@@ -159,7 +159,7 @@ const MemoryMatch = () => {
   const cols = totalCards <= 8 ? 4 : totalCards <= 16 ? 4 : totalCards <= 20 ? 5 : totalCards <= 30 ? 6 : totalCards <= 40 ? 8 : 10;
 
   return (
-    <GameLayout title="Memory Match" level={level} points={data.points}>
+    <GameLayout title="Memory Match" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-lg">
         {/* Stats */}
         <div className="flex justify-between items-center mb-4 px-1">

@@ -75,7 +75,7 @@ const DiceRoll = () => {
   const retry = () => { if (!spendEnergy(1)) return; setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
 
   return (
-    <GameLayout title="Dice Roll" level={level} points={data.points}>
+    <GameLayout title="Dice Roll" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Wins: <span className="text-primary font-bold">{wins}/{winsNeeded}</span></span>

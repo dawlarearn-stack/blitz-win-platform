@@ -150,7 +150,7 @@ const BombFinder = () => {
   };
 
   return (
-    <GameLayout title="Bomb Finder" level={level} points={data.points}>
+    <GameLayout title="Bomb Finder" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm relative">
         {/* Level Badge */}
         <motion.div
