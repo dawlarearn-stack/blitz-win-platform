@@ -51,7 +51,7 @@ const MOLE_EMOJI = "🐹";
 const BAD_MOLE_EMOJI = "💀";
 
 const WhackAMole = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["whack-a-mole"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
