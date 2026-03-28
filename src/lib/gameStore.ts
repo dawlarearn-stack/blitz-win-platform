@@ -11,18 +11,45 @@ export interface GameProgress {
   highestLevel: number;
 }
 
+export interface Referral {
+  id: string;
+  username: string;
+  gamesPlayed: number;
+  joinedAt: number; // timestamp
+  claimed: boolean;
+}
+
 export interface UserData {
   points: number;
   energy: number;
   gamesPlayed: number;
   progress: Record<string, GameProgress>;
+  referralCode: string;
+  referrals: Referral[];
+}
+
+function generateReferralCode(): string {
+  return "PGR-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 function loadData(): UserData {
-  const defaults: UserData = { points: 0, energy: 100, gamesPlayed: 0, progress: {} };
+  const defaults: UserData = {
+    points: 0,
+    energy: 100,
+    gamesPlayed: 0,
+    progress: {},
+    referralCode: generateReferralCode(),
+    referrals: [],
+  };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...defaults, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Ensure referralCode exists for old users
+      if (!parsed.referralCode) parsed.referralCode = generateReferralCode();
+      if (!parsed.referrals) parsed.referrals = [];
+      return { ...defaults, ...parsed };
+    }
   } catch {}
   return defaults;
 }
@@ -94,7 +121,26 @@ export function useGameStore() {
     return success;
   }, []);
 
-  return { data, addPoints, addEnergy, spendPoints, spendEnergy, updateProgress };
+  const claimReferral = useCallback((referralId: string) => {
+    setData((prev) => {
+      const referral = prev.referrals.find((r) => r.id === referralId);
+      if (!referral || referral.claimed) return prev;
+      const daysSinceJoin = (Date.now() - referral.joinedAt) / (1000 * 60 * 60 * 24);
+      if (referral.gamesPlayed < 50 || daysSinceJoin < 3) return prev;
+      const next = {
+        ...prev,
+        points: prev.points + 1000,
+        energy: prev.energy + 100,
+        referrals: prev.referrals.map((r) =>
+          r.id === referralId ? { ...r, claimed: true } : r
+        ),
+      };
+      saveData(next);
+      return next;
+    });
+  }, []);
+
+  return { data, addPoints, addEnergy, spendPoints, spendEnergy, updateProgress, claimReferral };
 }
 
 export function getPointsDollarValue(points: number): string {
