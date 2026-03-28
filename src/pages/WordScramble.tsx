@@ -69,6 +69,7 @@ const WordScramble = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setSolved(0);
     setTimeLeft(getTimeLimit(level));
