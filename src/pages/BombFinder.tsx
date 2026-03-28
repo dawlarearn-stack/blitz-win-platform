@@ -64,7 +64,7 @@ function generateGrid(bombs: number): Cell[] {
 }
 
 const BombFinder = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["bomb-finder"];
   const [level, setLevel] = useState(progress?.currentLevel ? progress.currentLevel + 1 : 1);
 
