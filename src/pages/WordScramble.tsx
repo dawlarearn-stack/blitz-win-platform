@@ -112,8 +112,8 @@ const WordScramble = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => setGameState("idle");
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
     <GameLayout title="Word Scramble" level={level} points={data.points}>
