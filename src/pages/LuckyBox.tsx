@@ -214,7 +214,7 @@ const LuckyBox = () => {
   };
 
   return (
-    <GameLayout title="Lucky Box" level={level} points={data.points}>
+    <GameLayout title="Lucky Box" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-md">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
