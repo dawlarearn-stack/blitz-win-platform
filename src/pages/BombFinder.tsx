@@ -137,6 +137,7 @@ const BombFinder = () => {
   };
 
   const resetGame = (newLevel: number) => {
+    if (!spendEnergy(1)) return;
     const cfg = getLevelConfig(newLevel);
     setLevel(newLevel);
     setGrid(generateGrid(cfg.bombs));
