@@ -135,6 +135,7 @@ const MemoryMatch = () => {
   );
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setCards(generateCards(next));
@@ -145,6 +146,7 @@ const MemoryMatch = () => {
   };
 
   const retry = () => {
+    if (!spendEnergy(1)) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
