@@ -67,6 +67,7 @@ const WhackAMole = () => {
   const maxMisses = 3;
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setHits(0);
     setMisses(0);
@@ -75,7 +76,7 @@ const WhackAMole = () => {
     setActiveCells(new Map());
     setEarnedPoints(0);
     setTapped(null);
-  }, []);
+  }, [spendEnergy]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
