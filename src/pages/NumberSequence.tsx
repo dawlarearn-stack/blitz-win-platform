@@ -156,6 +156,7 @@ const NumberSequence = () => {
   }, [gameState, feedback, puzzle, correct, roundsNeeded, level, addPoints, updateProgress]);
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setPuzzle(generateSequence(next));
@@ -167,6 +168,7 @@ const NumberSequence = () => {
   };
 
   const retry = () => {
+    if (!spendEnergy(1)) return;
     setPuzzle(generateSequence(level));
     setRound(0);
     setCorrect(0);
