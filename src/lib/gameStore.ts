@@ -23,7 +23,7 @@ function loadData(): UserData {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { points: 0, gamesPlayed: 0, progress: {} };
+  return { points: 0, energy: 100, gamesPlayed: 0, progress: {} };
 }
 
 function saveData(data: UserData) {
