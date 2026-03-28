@@ -19,11 +19,12 @@ export interface UserData {
 }
 
 function loadData(): UserData {
+  const defaults: UserData = { points: 0, energy: 100, gamesPlayed: 0, progress: {} };
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) return { ...defaults, ...JSON.parse(raw) };
   } catch {}
-  return { points: 0, energy: 100, gamesPlayed: 0, progress: {} };
+  return defaults;
 }
 
 function saveData(data: UserData) {
