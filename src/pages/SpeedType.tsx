@@ -35,7 +35,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const SpeedType = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["speed-type"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -57,13 +57,14 @@ const SpeedType = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setWordsTyped(0);
     setTimeLeft(timeLimit);
     setEarnedPoints(0);
     pickWord();
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [timeLimit, pickWord]);
+  }, [timeLimit, pickWord, spendEnergy]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -104,11 +105,11 @@ const SpeedType = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => setGameState("idle");
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Speed Type" level={level} points={data.points}>
+    <GameLayout title="Speed Type" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

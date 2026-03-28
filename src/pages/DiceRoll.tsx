@@ -22,7 +22,7 @@ function getPointsForLevel(level: number): number {
 const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
 const DiceRoll = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["dice-roll"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"playing" | "rolling" | "won" | "lost">("playing");
@@ -71,11 +71,11 @@ const DiceRoll = () => {
     }, 700);
   }, [gameState, wins, winsNeeded, level, addPoints, updateProgress]);
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
-  const retry = () => { setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
+  const retry = () => { if (!spendEnergy(1)) return; setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
 
   return (
-    <GameLayout title="Dice Roll" level={level} points={data.points}>
+    <GameLayout title="Dice Roll" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Wins: <span className="text-primary font-bold">{wins}/{winsNeeded}</span></span>

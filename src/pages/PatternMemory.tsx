@@ -26,7 +26,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const PatternMemory = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["pattern-memory"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "showing" | "input" | "won" | "lost">("idle");
@@ -40,6 +40,7 @@ const PatternMemory = () => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     const seq: number[] = [];
     for (let i = 0; i < seqLength; i++) {
       seq.push(Math.floor(Math.random() * totalCells));
@@ -64,7 +65,7 @@ const PatternMemory = () => {
       }
     };
     setTimeout(showNext, 500);
-  }, [seqLength, totalCells]);
+  }, [seqLength, totalCells, spendEnergy]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
@@ -96,11 +97,11 @@ const PatternMemory = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => setGameState("idle");
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Pattern Memory" level={level} points={data.points}>
+    <GameLayout title="Pattern Memory" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

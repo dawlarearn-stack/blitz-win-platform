@@ -68,7 +68,7 @@ interface Particle {
 }
 
 const LuckyBox = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["lucky-box"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [boxes, setBoxes] = useState<BoxState[]>(() => generateBoxes(level));
@@ -101,6 +101,7 @@ const LuckyBox = () => {
   };
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setBoxes(generateBoxes(level));
     setPicksLeft(PICKS_PER_LEVEL);
     setGameState("playing");
@@ -108,7 +109,7 @@ const LuckyBox = () => {
     setTotalRoundPoints(0);
     setParticles([]);
     setLastRevealedIdx(null);
-  }, [level]);
+  }, [level, spendEnergy]);
 
   const handleOpen = useCallback((index: number) => {
     if (gameState !== "playing" || boxes[index].revealed || picksLeft <= 0) return;
@@ -167,6 +168,7 @@ const LuckyBox = () => {
   }, [boxes, gameState, picksLeft, level, totalRoundPoints, addPoints, updateProgress]);
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setBoxes(generateBoxes(next));
@@ -212,7 +214,7 @@ const LuckyBox = () => {
   };
 
   return (
-    <GameLayout title="Lucky Box" level={level} points={data.points}>
+    <GameLayout title="Lucky Box" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-md">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">

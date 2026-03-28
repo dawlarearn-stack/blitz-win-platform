@@ -51,7 +51,7 @@ const MOLE_EMOJI = "🐹";
 const BAD_MOLE_EMOJI = "💀";
 
 const WhackAMole = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["whack-a-mole"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -67,6 +67,7 @@ const WhackAMole = () => {
   const maxMisses = 3;
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setHits(0);
     setMisses(0);
@@ -75,7 +76,7 @@ const WhackAMole = () => {
     setActiveCells(new Map());
     setEarnedPoints(0);
     setTapped(null);
-  }, []);
+  }, [spendEnergy]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -178,7 +179,7 @@ const WhackAMole = () => {
   const cols = gridSize <= 9 ? 3 : 4;
 
   return (
-    <GameLayout title="Whack-a-Mole" level={level} points={data.points}>
+    <GameLayout title="Whack-a-Mole" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" ? (
           <div className="text-center py-12">

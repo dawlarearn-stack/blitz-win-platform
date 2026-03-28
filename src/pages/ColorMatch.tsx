@@ -43,7 +43,7 @@ function pickRandom<T>(arr: T[], exclude?: T): T {
 }
 
 const ColorMatch = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["color-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -71,6 +71,7 @@ const ColorMatch = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setRound(0);
     setCorrect(0);
@@ -133,11 +134,11 @@ const ColorMatch = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => setGameState("idle");
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Color Match" level={level} points={data.points}>
+    <GameLayout title="Color Match" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

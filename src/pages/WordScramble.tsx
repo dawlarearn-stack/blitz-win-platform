@@ -45,7 +45,7 @@ function scramble(word: string): string {
 }
 
 const WordScramble = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["word-scramble"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -69,6 +69,7 @@ const WordScramble = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setSolved(0);
     setTimeLeft(getTimeLimit(level));
@@ -111,11 +112,11 @@ const WordScramble = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => setGameState("idle");
+  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Word Scramble" level={level} points={data.points}>
+    <GameLayout title="Word Scramble" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

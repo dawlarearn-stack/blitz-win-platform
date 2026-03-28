@@ -64,7 +64,7 @@ function generateGrid(bombs: number): Cell[] {
 }
 
 const BombFinder = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["bomb-finder"];
   const [level, setLevel] = useState(progress?.currentLevel ? progress.currentLevel + 1 : 1);
 
@@ -137,6 +137,7 @@ const BombFinder = () => {
   };
 
   const resetGame = (newLevel: number) => {
+    if (!spendEnergy(1)) return;
     const cfg = getLevelConfig(newLevel);
     setLevel(newLevel);
     setGrid(generateGrid(cfg.bombs));
@@ -149,7 +150,7 @@ const BombFinder = () => {
   };
 
   return (
-    <GameLayout title="Bomb Finder" level={level} points={data.points}>
+    <GameLayout title="Bomb Finder" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm relative">
         {/* Level Badge */}
         <motion.div

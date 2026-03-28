@@ -56,7 +56,7 @@ const ARENA_SIZE = 400;
 const TIME_LIMIT = 30;
 
 const ReactionTap = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["reaction-tap"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -98,6 +98,7 @@ const ReactionTap = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     cleanup();
     setGameState("playing");
     setHits(0);
@@ -218,14 +219,15 @@ const ReactionTap = () => {
   };
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     setLevel((l) => Math.min(l + 1, 100));
     setGameState("idle");
   };
 
-  const retry = () => setGameState("idle");
+  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
 
   return (
-    <GameLayout title="Reaction Tap" level={level} points={data.points}>
+    <GameLayout title="Reaction Tap" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-lg">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">

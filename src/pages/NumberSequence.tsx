@@ -86,7 +86,7 @@ function generateSequence(level: number): { sequence: number[]; answer: number; 
 }
 
 const NumberSequence = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["number-sequence"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
@@ -156,6 +156,7 @@ const NumberSequence = () => {
   }, [gameState, feedback, puzzle, correct, roundsNeeded, level, addPoints, updateProgress]);
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setPuzzle(generateSequence(next));
@@ -167,6 +168,7 @@ const NumberSequence = () => {
   };
 
   const retry = () => {
+    if (!spendEnergy(1)) return;
     setPuzzle(generateSequence(level));
     setRound(0);
     setCorrect(0);
@@ -176,7 +178,7 @@ const NumberSequence = () => {
   };
 
   return (
-    <GameLayout title="Number Sequence" level={level} points={data.points}>
+    <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Solved: <span className="text-primary font-bold">{correct}/{roundsNeeded}</span></span>

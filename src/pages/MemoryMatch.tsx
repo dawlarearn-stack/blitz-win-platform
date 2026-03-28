@@ -54,7 +54,7 @@ function generateCards(level: number) {
 type Card = { id: number; emoji: string; flipped: boolean; matched: boolean };
 
 const MemoryMatch = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["memory-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
@@ -135,6 +135,7 @@ const MemoryMatch = () => {
   );
 
   const nextLevel = () => {
+    if (!spendEnergy(1)) return;
     const next = Math.min(level + 1, 100);
     setLevel(next);
     setCards(generateCards(next));
@@ -145,6 +146,7 @@ const MemoryMatch = () => {
   };
 
   const retry = () => {
+    if (!spendEnergy(1)) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
@@ -157,7 +159,7 @@ const MemoryMatch = () => {
   const cols = totalCards <= 8 ? 4 : totalCards <= 16 ? 4 : totalCards <= 20 ? 5 : totalCards <= 30 ? 6 : totalCards <= 40 ? 8 : 10;
 
   return (
-    <GameLayout title="Memory Match" level={level} points={data.points}>
+    <GameLayout title="Memory Match" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-lg">
         {/* Stats */}
         <div className="flex justify-between items-center mb-4 px-1">
