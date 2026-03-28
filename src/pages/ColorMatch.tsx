@@ -71,6 +71,7 @@ const ColorMatch = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setRound(0);
     setCorrect(0);
