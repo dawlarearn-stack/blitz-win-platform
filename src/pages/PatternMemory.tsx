@@ -40,6 +40,7 @@ const PatternMemory = () => {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     const seq: number[] = [];
     for (let i = 0; i < seqLength; i++) {
       seq.push(Math.floor(Math.random() * totalCells));
