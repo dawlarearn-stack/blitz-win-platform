@@ -57,13 +57,14 @@ const SpeedType = () => {
   }, [level]);
 
   const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
     setGameState("playing");
     setWordsTyped(0);
     setTimeLeft(timeLimit);
     setEarnedPoints(0);
     pickWord();
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [timeLimit, pickWord]);
+  }, [timeLimit, pickWord, spendEnergy]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
