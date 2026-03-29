@@ -134,25 +134,20 @@ const MemoryMatch = () => {
     [cards, selected, gameState, moves, level, maxMoves, addPoints, updateProgress]
   );
 
-  const nextLevel = () => {
-    if (!spendEnergy(1)) return;
-    const next = Math.min(level + 1, 100);
-    setLevel(next);
-    setCards(generateCards(next));
-    setMoves(0);
-    setSelected([]);
-    setGameState("playing");
-    setEarnedPoints(0);
-  };
-
-  const retry = () => {
+  const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
-    setGameState("playing");
+    setMatchFlash([]);
+    setFailFlash([]);
+    setSparkleIds([]);
     setEarnedPoints(0);
-  };
+    setGameState("playing");
+  }, [level, spendEnergy]);
+
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   // Grid columns based on card count
   const totalCards = pairCount * 2;
