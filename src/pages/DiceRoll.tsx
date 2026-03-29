@@ -80,8 +80,8 @@ const DiceRoll = () => {
     }, 700);
   }, [gameState, wins, winsNeeded, level, addPoints, updateProgress]);
 
-  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
-  const retry = () => { if (!spendEnergy(1)) return; setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   return (
     <GameLayout title="Dice Roll" level={level} points={data.points} energy={data.energy}>
