@@ -275,11 +275,11 @@ const MemoryMatch = () => {
             );
           })}
         </div>
-
+        </>)}
 
         {/* Win / Lose Overlay */}
         <AnimatePresence>
-          {gameState !== "playing" && (
+          {(gameState === "won" || gameState === "lost") && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
