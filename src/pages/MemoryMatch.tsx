@@ -60,7 +60,7 @@ const MemoryMatch = () => {
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
   const [selected, setSelected] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [matchFlash, setMatchFlash] = useState<number[]>([]);
   const [failFlash, setFailFlash] = useState<number[]>([]);
@@ -134,25 +134,20 @@ const MemoryMatch = () => {
     [cards, selected, gameState, moves, level, maxMoves, addPoints, updateProgress]
   );
 
-  const nextLevel = () => {
-    if (!spendEnergy(1)) return;
-    const next = Math.min(level + 1, 100);
-    setLevel(next);
-    setCards(generateCards(next));
-    setMoves(0);
-    setSelected([]);
-    setGameState("playing");
-    setEarnedPoints(0);
-  };
-
-  const retry = () => {
+  const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
-    setGameState("playing");
+    setMatchFlash([]);
+    setFailFlash([]);
+    setSparkleIds([]);
     setEarnedPoints(0);
-  };
+    setGameState("playing");
+  }, [level, spendEnergy]);
+
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   // Grid columns based on card count
   const totalCards = pairCount * 2;
@@ -161,6 +156,17 @@ const MemoryMatch = () => {
   return (
     <GameLayout title="Memory Match" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-lg">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🃏</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Memory Match</h2>
+            <p className="text-muted-foreground text-sm mb-1">Match <span className="text-primary font-bold">{pairCount}</span> pairs in <span className="text-accent font-bold">{maxMoves}</span> moves</p>
+            <p className="text-muted-foreground text-xs mb-6">Find all matching emoji pairs!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState !== "idle" && (<>
         {/* Stats */}
         <div className="flex justify-between items-center mb-4 px-1">
           <div className="flex items-center gap-3">
@@ -269,11 +275,11 @@ const MemoryMatch = () => {
             );
           })}
         </div>
-
+        </>)}
 
         {/* Win / Lose Overlay */}
         <AnimatePresence>
-          {gameState !== "playing" && (
+          {(gameState === "won" || gameState === "lost") && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

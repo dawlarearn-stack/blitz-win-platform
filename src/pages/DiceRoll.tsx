@@ -25,12 +25,21 @@ const DiceRoll = () => {
   const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["dice-roll"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
-  const [gameState, setGameState] = useState<"playing" | "rolling" | "won" | "lost">("playing");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "rolling" | "won" | "lost">("idle");
   const [wins, setWins] = useState(0);
   const [dice, setDice] = useState<[number, number]>([1, 1]);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [lastResult, setLastResult] = useState<"correct" | "wrong" | null>(null);
   const winsNeeded = getWinsNeeded(level);
+
+  const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
+    setWins(0);
+    setLastResult(null);
+    setGameState("playing");
+    setEarnedPoints(0);
+    setDice([1, 1]);
+  }, [spendEnergy]);
 
   const handleGuess = useCallback((guess: "high" | "low" | "seven") => {
     if (gameState !== "playing") return;
@@ -71,12 +80,23 @@ const DiceRoll = () => {
     }, 700);
   }, [gameState, wins, winsNeeded, level, addPoints, updateProgress]);
 
-  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
-  const retry = () => { if (!spendEnergy(1)) return; setWins(0); setLastResult(null); setGameState("playing"); setEarnedPoints(0); };
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   return (
     <GameLayout title="Dice Roll" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🎲</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Dice Roll</h2>
+            <p className="text-muted-foreground text-sm mb-1">Get <span className="text-primary font-bold">{winsNeeded}</span> correct predictions</p>
+            <p className="text-muted-foreground text-xs mb-6">Predict High, Low, or Seven!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {(gameState === "playing" || gameState === "rolling") && (<>
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Wins: <span className="text-primary font-bold">{wins}/{winsNeeded}</span></span>
           <span className="text-xs text-muted-foreground">+{getPointsForLevel(level)} pts</span>
@@ -120,6 +140,7 @@ const DiceRoll = () => {
             ))}
           </div>
         </div>
+        </>)}
 
         <AnimatePresence>
           {(gameState === "won" || gameState === "lost") && (

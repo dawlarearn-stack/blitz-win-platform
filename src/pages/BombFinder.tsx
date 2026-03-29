@@ -47,7 +47,7 @@ function getPointsForLevel(level: number): number {
 }
 
 type Cell = { id: number; isBomb: boolean; revealed: boolean };
-type GameState = "playing" | "won" | "lost";
+type GameState = "idle" | "playing" | "won" | "lost";
 
 function generateGrid(bombs: number): Cell[] {
   const indices = Array.from({ length: TOTAL_CELLS }, (_, i) => i);
@@ -70,7 +70,7 @@ const BombFinder = () => {
 
   const config = useMemo(() => getLevelConfig(level), [level]);
   const [grid, setGrid] = useState<Cell[]>(() => generateGrid(config.bombs));
-  const [gameState, setGameState] = useState<GameState>("playing");
+  const [gameState, setGameState] = useState<GameState>("idle");
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [safeClicked, setSafeClicked] = useState(0);
 
@@ -149,9 +149,28 @@ const BombFinder = () => {
     setPointPopups([]);
   };
 
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
+
   return (
     <GameLayout title="Bomb Finder" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm relative">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="relative mx-auto mb-6 w-20 h-20">
+              <div className="absolute inset-0 rounded-full animate-pulse" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.3), transparent)" }} />
+              <Bomb className="w-20 h-20 text-primary relative z-10" />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Bomb Finder</h2>
+            <p className="text-muted-foreground text-sm mb-1">
+              Find <span className="text-primary font-bold">{config.safeTarget}</span> safe cells · Avoid <span className="text-destructive font-bold">{config.bombs}</span> bombs
+            </p>
+            <p className="text-muted-foreground text-xs mb-6">+{getPointsForLevel(level)} pts on success</p>
+            <button onClick={() => resetGame(level)} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState !== "idle" && (<>
         {/* Level Badge */}
         <motion.div
           key={level}
@@ -344,7 +363,7 @@ const BombFinder = () => {
                       +{earnedPoints} pts
                     </motion.p>
                     <button
-                      onClick={() => resetGame(Math.min(level + 1, 100))}
+                      onClick={nextLevel}
                       className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-8 py-3 rounded-xl neon-glow hover:scale-105 transition-transform w-full justify-center"
                     >
                       {level < 100 ? (
@@ -370,7 +389,7 @@ const BombFinder = () => {
                     </p>
                     <p className="text-muted-foreground text-[10px] mb-6">You hit a bomb. Try again!</p>
                     <button
-                      onClick={() => resetGame(level)}
+                      onClick={retry}
                       className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-sm font-bold px-8 py-3 rounded-xl hover:bg-secondary/80 transition-colors neon-border w-full justify-center"
                     >
                       <RotateCcw className="w-4 h-4" /> RETRY
@@ -381,6 +400,7 @@ const BombFinder = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </>)}
       </div>
     </GameLayout>
   );

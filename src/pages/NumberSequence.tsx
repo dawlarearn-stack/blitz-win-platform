@@ -89,7 +89,7 @@ const NumberSequence = () => {
   const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["number-sequence"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
-  const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [puzzle, setPuzzle] = useState(() => generateSequence(level));
@@ -155,19 +155,7 @@ const NumberSequence = () => {
     }
   }, [gameState, feedback, puzzle, correct, roundsNeeded, level, addPoints, updateProgress]);
 
-  const nextLevel = () => {
-    if (!spendEnergy(1)) return;
-    const next = Math.min(level + 1, 100);
-    setLevel(next);
-    setPuzzle(generateSequence(next));
-    setRound(0);
-    setCorrect(0);
-    setTimeLeft(getTimeLimit(next));
-    setGameState("playing");
-    setEarnedPoints(0);
-  };
-
-  const retry = () => {
+  const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
     setPuzzle(generateSequence(level));
     setRound(0);
@@ -175,11 +163,27 @@ const NumberSequence = () => {
     setTimeLeft(getTimeLimit(level));
     setGameState("playing");
     setEarnedPoints(0);
-  };
+    setFeedback(null);
+    setFeedbackCorrect(false);
+  }, [level, spendEnergy]);
+
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   return (
     <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🧮</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Number Sequence</h2>
+            <p className="text-muted-foreground text-sm mb-1">Solve <span className="text-primary font-bold">{roundsNeeded}</span> sequences in <span className="text-accent font-bold">{getTimeLimit(level)}s</span></p>
+            <p className="text-muted-foreground text-xs mb-6">Find the next number in the pattern!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState === "playing" && (<>
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Solved: <span className="text-primary font-bold">{correct}/{roundsNeeded}</span></span>
           <span className={`text-xs font-bold ${timeLeft <= 3 ? "text-destructive" : "text-accent"}`}>{timeLeft}s</span>
@@ -232,9 +236,10 @@ const NumberSequence = () => {
             </motion.button>
           ))}
         </div>
+        </>)}
 
         <AnimatePresence>
-          {gameState !== "playing" && (
+          {(gameState === "won" || gameState === "lost") && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md">
               <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="gradient-card rounded-2xl border border-border/50 p-8 text-center max-w-xs mx-4">
                 {gameState === "won" ? (
