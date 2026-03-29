@@ -363,7 +363,7 @@ const BombFinder = () => {
                       +{earnedPoints} pts
                     </motion.p>
                     <button
-                      onClick={() => resetGame(Math.min(level + 1, 100))}
+                      onClick={nextLevel}
                       className="inline-flex items-center gap-2 gradient-primary text-primary-foreground font-display text-sm font-bold px-8 py-3 rounded-xl neon-glow hover:scale-105 transition-transform w-full justify-center"
                     >
                       {level < 100 ? (
