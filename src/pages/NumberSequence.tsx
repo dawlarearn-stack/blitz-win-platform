@@ -173,6 +173,17 @@ const NumberSequence = () => {
   return (
     <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🧮</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Number Sequence</h2>
+            <p className="text-muted-foreground text-sm mb-1">Solve <span className="text-primary font-bold">{roundsNeeded}</span> sequences in <span className="text-accent font-bold">{getTimeLimit(level)}s</span></p>
+            <p className="text-muted-foreground text-xs mb-6">Find the next number in the pattern!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState === "playing" && (<>
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Solved: <span className="text-primary font-bold">{correct}/{roundsNeeded}</span></span>
           <span className={`text-xs font-bold ${timeLeft <= 3 ? "text-destructive" : "text-accent"}`}>{timeLeft}s</span>
