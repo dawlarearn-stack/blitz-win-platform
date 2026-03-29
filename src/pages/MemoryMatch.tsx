@@ -60,7 +60,7 @@ const MemoryMatch = () => {
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
   const [selected, setSelected] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
-  const [gameState, setGameState] = useState<"playing" | "won" | "lost">("playing");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [matchFlash, setMatchFlash] = useState<number[]>([]);
   const [failFlash, setFailFlash] = useState<number[]>([]);
