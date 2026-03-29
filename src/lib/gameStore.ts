@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 // Simple client-side store for points and game progress
 // Will be replaced with Supabase backend later
