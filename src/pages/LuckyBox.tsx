@@ -167,22 +167,8 @@ const LuckyBox = () => {
     }
   }, [boxes, gameState, picksLeft, level, totalRoundPoints, addPoints, updateProgress]);
 
-  const nextLevel = () => {
-    if (!spendEnergy(1)) return;
-    const next = Math.min(level + 1, 100);
-    setLevel(next);
-    setBoxes(generateBoxes(next));
-    setPicksLeft(PICKS_PER_LEVEL);
-    setGameState("playing");
-    setEarnedPoints(0);
-    setTotalRoundPoints(0);
-    setParticles([]);
-    setLastRevealedIdx(null);
-  };
-
-  const retry = () => {
-    startGame();
-  };
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   const getBoxStyle = (box: BoxState, idx: number) => {
     if (!box.revealed) {

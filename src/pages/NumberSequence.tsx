@@ -236,9 +236,10 @@ const NumberSequence = () => {
             </motion.button>
           ))}
         </div>
+        </>)}
 
         <AnimatePresence>
-          {gameState !== "playing" && (
+          {(gameState === "won" || gameState === "lost") && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-md">
               <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="gradient-card rounded-2xl border border-border/50 p-8 text-center max-w-xs mx-4">
                 {gameState === "won" ? (
