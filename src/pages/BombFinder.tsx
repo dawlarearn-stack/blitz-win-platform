@@ -47,7 +47,7 @@ function getPointsForLevel(level: number): number {
 }
 
 type Cell = { id: number; isBomb: boolean; revealed: boolean };
-type GameState = "playing" | "won" | "lost";
+type GameState = "idle" | "playing" | "won" | "lost";
 
 function generateGrid(bombs: number): Cell[] {
   const indices = Array.from({ length: TOTAL_CELLS }, (_, i) => i);
