@@ -25,12 +25,21 @@ const DiceRoll = () => {
   const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["dice-roll"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
-  const [gameState, setGameState] = useState<"playing" | "rolling" | "won" | "lost">("playing");
+  const [gameState, setGameState] = useState<"idle" | "playing" | "rolling" | "won" | "lost">("idle");
   const [wins, setWins] = useState(0);
   const [dice, setDice] = useState<[number, number]>([1, 1]);
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [lastResult, setLastResult] = useState<"correct" | "wrong" | null>(null);
   const winsNeeded = getWinsNeeded(level);
+
+  const startGame = useCallback(() => {
+    if (!spendEnergy(1)) return;
+    setWins(0);
+    setLastResult(null);
+    setGameState("playing");
+    setEarnedPoints(0);
+    setDice([1, 1]);
+  }, [spendEnergy]);
 
   const handleGuess = useCallback((guess: "high" | "low" | "seven") => {
     if (gameState !== "playing") return;
