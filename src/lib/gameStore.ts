@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 // Simple client-side store for points and game progress
 // Will be replaced with Supabase backend later
@@ -118,6 +119,9 @@ export function useGameStore() {
       saveData(next);
       return next;
     });
+    if (!success) {
+      toast.error("Energy မလုံလောက်ပါ!", { description: "Shop မှာ Energy ဝယ်ပါ ⚡" });
+    }
     return success;
   }, []);
 
