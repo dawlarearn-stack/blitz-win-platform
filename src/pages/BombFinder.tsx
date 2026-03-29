@@ -70,7 +70,7 @@ const BombFinder = () => {
 
   const config = useMemo(() => getLevelConfig(level), [level]);
   const [grid, setGrid] = useState<Cell[]>(() => generateGrid(config.bombs));
-  const [gameState, setGameState] = useState<GameState>("playing");
+  const [gameState, setGameState] = useState<GameState>("idle");
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [safeClicked, setSafeClicked] = useState(0);
 
