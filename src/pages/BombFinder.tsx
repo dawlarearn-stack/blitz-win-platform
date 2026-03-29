@@ -400,6 +400,7 @@ const BombFinder = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        </>)}
       </div>
     </GameLayout>
   );
