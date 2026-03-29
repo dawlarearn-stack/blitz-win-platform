@@ -140,6 +140,7 @@ const DiceRoll = () => {
             ))}
           </div>
         </div>
+        </>)}
 
         <AnimatePresence>
           {(gameState === "won" || gameState === "lost") && (
