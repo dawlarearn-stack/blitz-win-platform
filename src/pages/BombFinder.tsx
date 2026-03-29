@@ -389,7 +389,7 @@ const BombFinder = () => {
                     </p>
                     <p className="text-muted-foreground text-[10px] mb-6">You hit a bomb. Try again!</p>
                     <button
-                      onClick={() => resetGame(level)}
+                      onClick={retry}
                       className="inline-flex items-center gap-2 bg-secondary text-foreground font-display text-sm font-bold px-8 py-3 rounded-xl hover:bg-secondary/80 transition-colors neon-border w-full justify-center"
                     >
                       <RotateCcw className="w-4 h-4" /> RETRY
