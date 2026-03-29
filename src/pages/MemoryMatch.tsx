@@ -156,6 +156,17 @@ const MemoryMatch = () => {
   return (
     <GameLayout title="Memory Match" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-lg">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🃏</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Memory Match</h2>
+            <p className="text-muted-foreground text-sm mb-1">Match <span className="text-primary font-bold">{pairCount}</span> pairs in <span className="text-accent font-bold">{maxMoves}</span> moves</p>
+            <p className="text-muted-foreground text-xs mb-6">Find all matching emoji pairs!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState !== "idle" && (<>
         {/* Stats */}
         <div className="flex justify-between items-center mb-4 px-1">
           <div className="flex items-center gap-3">
