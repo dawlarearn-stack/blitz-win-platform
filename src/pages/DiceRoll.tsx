@@ -86,6 +86,17 @@ const DiceRoll = () => {
   return (
     <GameLayout title="Dice Roll" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="text-6xl mb-4">🎲</div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Dice Roll</h2>
+            <p className="text-muted-foreground text-sm mb-1">Get <span className="text-primary font-bold">{winsNeeded}</span> correct predictions</p>
+            <p className="text-muted-foreground text-xs mb-6">Predict High, Low, or Seven!</p>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {(gameState === "playing" || gameState === "rolling") && (<>
         <div className="flex justify-between items-center mb-4 px-1">
           <span className="text-xs text-muted-foreground">Wins: <span className="text-primary font-bold">{wins}/{winsNeeded}</span></span>
           <span className="text-xs text-muted-foreground">+{getPointsForLevel(level)} pts</span>
