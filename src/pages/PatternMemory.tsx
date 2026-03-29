@@ -97,8 +97,8 @@ const PatternMemory = () => {
     }
   };
 
-  const nextLevel = () => { if (!spendEnergy(1)) return; setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { if (!spendEnergy(1)) return; setGameState("idle"); };
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   return (
     <GameLayout title="Pattern Memory" level={level} points={data.points} energy={data.energy}>

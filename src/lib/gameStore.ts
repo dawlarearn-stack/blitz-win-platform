@@ -119,6 +119,9 @@ export function useGameStore() {
       saveData(next);
       return next;
     });
+    if (!success) {
+      toast.error("Energy မလုံလောက်ပါ!", { description: "Shop မှာ Energy ဝယ်ပါ ⚡" });
+    }
     return success;
   }, []);
 
