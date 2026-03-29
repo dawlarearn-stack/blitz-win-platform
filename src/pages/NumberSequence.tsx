@@ -155,19 +155,7 @@ const NumberSequence = () => {
     }
   }, [gameState, feedback, puzzle, correct, roundsNeeded, level, addPoints, updateProgress]);
 
-  const nextLevel = () => {
-    if (!spendEnergy(1)) return;
-    const next = Math.min(level + 1, 100);
-    setLevel(next);
-    setPuzzle(generateSequence(next));
-    setRound(0);
-    setCorrect(0);
-    setTimeLeft(getTimeLimit(next));
-    setGameState("playing");
-    setEarnedPoints(0);
-  };
-
-  const retry = () => {
+  const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
     setPuzzle(generateSequence(level));
     setRound(0);
@@ -175,7 +163,12 @@ const NumberSequence = () => {
     setTimeLeft(getTimeLimit(level));
     setGameState("playing");
     setEarnedPoints(0);
-  };
+    setFeedback(null);
+    setFeedbackCorrect(false);
+  }, [level, spendEnergy]);
+
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
 
   return (
     <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>
