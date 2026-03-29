@@ -149,9 +149,28 @@ const BombFinder = () => {
     setPointPopups([]);
   };
 
+  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const retry = () => { setGameState("idle"); };
+
   return (
     <GameLayout title="Bomb Finder" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm relative">
+        {gameState === "idle" && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10">
+            <div className="relative mx-auto mb-6 w-20 h-20">
+              <div className="absolute inset-0 rounded-full animate-pulse" style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.3), transparent)" }} />
+              <Bomb className="w-20 h-20 text-primary relative z-10" />
+            </div>
+            <h2 className="font-display text-2xl font-bold text-foreground mb-2">Bomb Finder</h2>
+            <p className="text-muted-foreground text-sm mb-1">
+              Find <span className="text-primary font-bold">{config.safeTarget}</span> safe cells · Avoid <span className="text-destructive font-bold">{config.bombs}</span> bombs
+            </p>
+            <p className="text-muted-foreground text-xs mb-6">+{getPointsForLevel(level)} pts on success</p>
+            <button onClick={() => resetGame(level)} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+          </motion.div>
+        )}
+
+        {gameState !== "idle" && (<>
         {/* Level Badge */}
         <motion.div
           key={level}
