@@ -136,10 +136,9 @@ const BombFinder = () => {
     }
   };
 
-  const resetGame = (newLevel: number) => {
+  const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
-    const cfg = getLevelConfig(newLevel);
-    setLevel(newLevel);
+    const cfg = getLevelConfig(level);
     setGrid(generateGrid(cfg.bombs));
     setGameState("playing");
     setEarnedPoints(0);
@@ -147,7 +146,7 @@ const BombFinder = () => {
     setParticles([]);
     setExplosions([]);
     setPointPopups([]);
-  };
+  }, [level, spendEnergy]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };
@@ -166,7 +165,7 @@ const BombFinder = () => {
               Find <span className="text-primary font-bold">{config.safeTarget}</span> safe cells · Avoid <span className="text-destructive font-bold">{config.bombs}</span> bombs
             </p>
             <p className="text-muted-foreground text-xs mb-6">+{getPointsForLevel(level)} pts on success</p>
-            <button onClick={() => resetGame(level)} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
           </motion.div>
         )}
 
