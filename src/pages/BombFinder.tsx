@@ -165,7 +165,7 @@ const BombFinder = () => {
               Find <span className="text-primary font-bold">{config.safeTarget}</span> safe cells · Avoid <span className="text-destructive font-bold">{config.bombs}</span> bombs
             </p>
             <p className="text-muted-foreground text-xs mb-6">+{getPointsForLevel(level)} pts on success</p>
-            <button onClick={() => resetGame(level)} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
+            <button onClick={startGame} className="gradient-primary text-primary-foreground font-display text-sm font-bold px-10 py-3 rounded-xl neon-glow hover:scale-105 transition-transform">START</button>
           </motion.div>
         )}
 
