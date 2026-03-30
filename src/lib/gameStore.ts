@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 // Simple client-side store for points and game progress
@@ -61,19 +61,28 @@ function saveData(data: UserData) {
 
 export function useGameStore() {
   const [data, setData] = useState<UserData>(loadData);
+  const dataRef = useRef(data);
 
-  const addPoints = useCallback((amount: number) => {
-    setData((prev) => {
-      const next = { ...prev, points: prev.points + amount };
-      saveData(next);
-      return next;
-    });
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+
+  const commitData = useCallback((updater: (prev: UserData) => UserData) => {
+    const next = updater(dataRef.current);
+    dataRef.current = next;
+    saveData(next);
+    setData(next);
+    return next;
   }, []);
 
+  const addPoints = useCallback((amount: number) => {
+    commitData((prev) => ({ ...prev, points: prev.points + amount }));
+  }, [commitData]);
+
   const updateProgress = useCallback((gameId: string, level: number) => {
-    setData((prev) => {
+    commitData((prev) => {
       const existing = prev.progress[gameId] || { gameId, currentLevel: 0, highestLevel: 0 };
-      const next = {
+      return {
         ...prev,
         gamesPlayed: prev.gamesPlayed + 1,
         progress: {
@@ -85,53 +94,35 @@ export function useGameStore() {
           },
         },
       };
-      saveData(next);
-      return next;
     });
-  }, []);
+  }, [commitData]);
 
   const addEnergy = useCallback((amount: number) => {
-    setData((prev) => {
-      const next = { ...prev, energy: prev.energy + amount };
-      saveData(next);
-      return next;
-    });
-  }, []);
+    commitData((prev) => ({ ...prev, energy: prev.energy + amount }));
+  }, [commitData]);
 
   const spendPoints = useCallback((amount: number): boolean => {
-    let success = false;
-    setData((prev) => {
-      if (prev.points < amount) return prev;
-      success = true;
-      const next = { ...prev, points: prev.points - amount };
-      saveData(next);
-      return next;
-    });
-    return success;
-  }, []);
+    if (dataRef.current.points < amount) return false;
+    commitData((prev) => ({ ...prev, points: prev.points - amount }));
+    return true;
+  }, [commitData]);
 
   const spendEnergy = useCallback((amount: number = 1): boolean => {
-    let success = false;
-    setData((prev) => {
-      if (prev.energy < amount) return prev;
-      success = true;
-      const next = { ...prev, energy: prev.energy - amount };
-      saveData(next);
-      return next;
-    });
-    if (!success) {
+    if (dataRef.current.energy < amount) {
       toast.error("Energy မလုံလောက်ပါ!", { description: "Shop မှာ Energy ဝယ်ပါ ⚡" });
+      return false;
     }
-    return success;
-  }, []);
+    commitData((prev) => ({ ...prev, energy: prev.energy - amount }));
+    return true;
+  }, [commitData]);
 
   const claimReferral = useCallback((referralId: string) => {
-    setData((prev) => {
+    commitData((prev) => {
       const referral = prev.referrals.find((r) => r.id === referralId);
       if (!referral || referral.claimed) return prev;
       const daysSinceJoin = (Date.now() - referral.joinedAt) / (1000 * 60 * 60 * 24);
       if (referral.gamesPlayed < 50 || daysSinceJoin < 3) return prev;
-      const next = {
+      return {
         ...prev,
         points: prev.points + 1000,
         energy: prev.energy + 100,
@@ -139,10 +130,8 @@ export function useGameStore() {
           r.id === referralId ? { ...r, claimed: true } : r
         ),
       };
-      saveData(next);
-      return next;
     });
-  }, []);
+  }, [commitData]);
 
   return { data, addPoints, addEnergy, spendPoints, spendEnergy, updateProgress, claimReferral };
 }
