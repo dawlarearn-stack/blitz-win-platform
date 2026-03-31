@@ -26,4 +26,8 @@ if (window.Telegram?.WebApp) {
   } catch {}
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
