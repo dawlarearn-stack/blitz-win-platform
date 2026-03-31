@@ -4,6 +4,9 @@ import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import WeeklyInviteLeaderboard from "@/components/WeeklyInviteLeaderboard";
+import { checkAndDistributeRewards } from "@/lib/weeklyLeaderboard";
+import { useEffect } from "react";
 
 const MOCK_PLAYERS = [
   { rank: 1, name: "CyberKing", points: 28500, gamesPlayed: 342 },
@@ -58,10 +61,14 @@ const getInviterGlow = (rank: number) => {
 };
 
 const Leaderboard = () => {
-  const { data } = useGameStore();
+  const { data, addPoints } = useGameStore();
   const userInvites = data.referrals.filter(
     (r) => r.gamesPlayed >= 50 && (Date.now() - r.joinedAt) / (1000 * 60 * 60 * 24) >= 3
   ).length;
+
+  useEffect(() => {
+    checkAndDistributeRewards(addPoints);
+  }, [addPoints]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -203,6 +210,10 @@ const Leaderboard = () => {
               </div>
             </ScrollArea>
           </motion.div>
+          {/* Weekly Invite Race */}
+          <div className="mt-10">
+            <WeeklyInviteLeaderboard userInvites={userInvites} />
+          </div>
         </div>
       </div>
     </div>
