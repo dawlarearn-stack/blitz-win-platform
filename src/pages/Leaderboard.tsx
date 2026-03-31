@@ -210,6 +210,10 @@ const Leaderboard = () => {
               </div>
             </ScrollArea>
           </motion.div>
+          {/* Weekly Invite Race */}
+          <div className="mt-10">
+            <WeeklyInviteLeaderboard userInvites={userInvites} />
+          </div>
         </div>
       </div>
     </div>
