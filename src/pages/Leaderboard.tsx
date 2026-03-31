@@ -61,10 +61,14 @@ const getInviterGlow = (rank: number) => {
 };
 
 const Leaderboard = () => {
-  const { data } = useGameStore();
+  const { data, addPoints } = useGameStore();
   const userInvites = data.referrals.filter(
     (r) => r.gamesPlayed >= 50 && (Date.now() - r.joinedAt) / (1000 * 60 * 60 * 24) >= 3
   ).length;
+
+  useEffect(() => {
+    checkAndDistributeRewards(addPoints);
+  }, [addPoints]);
 
   return (
     <div className="min-h-screen bg-background">
