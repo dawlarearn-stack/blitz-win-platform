@@ -4,6 +4,9 @@ import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import WeeklyInviteLeaderboard from "@/components/WeeklyInviteLeaderboard";
+import { checkAndDistributeRewards } from "@/lib/weeklyLeaderboard";
+import { useEffect } from "react";
 
 const MOCK_PLAYERS = [
   { rank: 1, name: "CyberKing", points: 28500, gamesPlayed: 342 },
