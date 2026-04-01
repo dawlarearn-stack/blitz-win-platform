@@ -142,8 +142,7 @@ const LuckyBox = () => {
           playLevelWin();
           const finalPts = totalRoundPoints + pts;
           setEarnedPoints(finalPts);
-          addPoints(finalPts);
-          updateProgress("lucky-box", level);
+          completeLevel("lucky-box", level, true);
           setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
           setGameState("won");
         }, 500);
