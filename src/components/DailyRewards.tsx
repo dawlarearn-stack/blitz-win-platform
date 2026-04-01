@@ -6,6 +6,8 @@ import {
   CHECKIN_REWARDS,
   LEVEL_TASKS,
   AD_TASKS,
+  DAILY_FREE_ENERGY,
+  REQUIRED_AD_TASKS_FOR_FREE_ENERGY,
   useDailyRewards,
 } from "@/lib/dailyRewards";
 import type { GameProgress } from "@/lib/gameStore";
