@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-
+import { showRewardAd } from "@/lib/adsgram";
 const DAILY_KEY = "pgr_daily_rewards";
 
 export interface CheckinDay {
