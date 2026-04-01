@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw, Calculator } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 function getProblemsNeeded(level: number): number {
   return Math.min(5 + Math.floor(level * 0.1), 15);

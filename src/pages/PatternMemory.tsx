@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 function getSequenceLength(level: number): number {
   return Math.min(3 + Math.floor(level * 0.12), 15);

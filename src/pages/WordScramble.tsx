@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw, Type } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 const WORDS_POOL = [
   "game", "play", "coin", "star", "fire", "gold", "hero", "luck", "dice", "card",

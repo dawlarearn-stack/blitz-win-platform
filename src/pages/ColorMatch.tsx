@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 const COLORS = [
   { name: "Red", hsl: "0 80% 55%" },

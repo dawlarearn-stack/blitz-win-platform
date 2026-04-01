@@ -4,6 +4,7 @@ import { ArrowRight, Gift } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 const TOTAL_BOXES = 15;
 const PICKS_PER_LEVEL = 3;
