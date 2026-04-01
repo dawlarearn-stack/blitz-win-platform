@@ -98,8 +98,7 @@ const SpeedType = () => {
         playLevelWin();
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("speed-type", level);
+        completeLevel("speed-type", level, true);
         setGameState("won");
       } else {
         pickWord();

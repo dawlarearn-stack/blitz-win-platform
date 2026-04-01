@@ -159,14 +159,13 @@ const LuckyBox = () => {
           playLevelWin();
           const finalPts = totalRoundPoints + pts;
           setEarnedPoints(finalPts);
-          addPoints(finalPts);
-          updateProgress("lucky-box", level);
+          completeLevel("lucky-box", level, true);
           setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
           setGameState("won");
         }, 500);
       }
     }
-  }, [boxes, gameState, picksLeft, level, totalRoundPoints, addPoints, updateProgress]);
+  }, [boxes, gameState, picksLeft, level, totalRoundPoints, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };
