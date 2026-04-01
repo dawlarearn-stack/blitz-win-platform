@@ -29,7 +29,7 @@ export type Database = {
           status: Database["public"]["Enums"]["payment_status"]
           telegram_id: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -45,7 +45,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           telegram_id?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -61,7 +61,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"]
           telegram_id?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -88,6 +88,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_payment_request: {
+        Args: {
+          p_energy_amount: number
+          p_expires_at?: string
+          p_payment_method: Database["public"]["Enums"]["payment_method"]
+          p_price_mmk: string
+          p_receipt_last4: string
+          p_screenshot_url?: string
+          p_sender_name: string
+          p_sender_phone: string
+          p_telegram_id: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
