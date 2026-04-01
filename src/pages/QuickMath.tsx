@@ -78,13 +78,15 @@ const QuickMath = () => {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const problemsNeeded = getProblemsNeeded(level);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("quick-math", level);
+    if (!ok) return;
     setGameState("playing");
     setSolved(0);
     setTimeLeft(getTimeLimit(level));
     setEarnedPoints(0);
     setProblem(generateProblem(level));
-  }, [level]);
+  }, [level, startLevel]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
