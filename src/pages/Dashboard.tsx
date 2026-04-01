@@ -113,6 +113,7 @@ const Dashboard = () => {
             </p>
             <button
               disabled={!canWithdraw}
+              onClick={() => canWithdraw && setWithdrawOpen(true)}
               className={`font-display text-sm font-bold px-8 py-3 rounded-xl transition-all ${
                 canWithdraw
                   ? "gradient-primary text-primary-foreground neon-glow hover:scale-105"
@@ -122,6 +123,14 @@ const Dashboard = () => {
               {canWithdraw ? `WITHDRAW $${dollarValue}` : `Need $${(5 - parseFloat(dollarValue)).toFixed(2)} more`}
             </button>
           </motion.div>
+
+          <WithdrawFlow
+            open={withdrawOpen}
+            onOpenChange={setWithdrawOpen}
+            points={data.points}
+            dollarValue={dollarValue}
+            onComplete={(pts) => spendPoints(pts)}
+          />
 
           {/* Referrals & Rewards */}
           <motion.div
