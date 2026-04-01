@@ -56,15 +56,16 @@ const SpeedType = () => {
     setInput("");
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("speed-type", level);
+    if (!ok) return;
     setGameState("playing");
     setWordsTyped(0);
     setTimeLeft(timeLimit);
     setEarnedPoints(0);
     pickWord();
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [timeLimit, pickWord, spendEnergy]);
+  }, [timeLimit, pickWord, startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
