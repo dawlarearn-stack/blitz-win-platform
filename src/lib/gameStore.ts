@@ -30,7 +30,7 @@ export interface UserData {
 
 const defaultData: UserData = {
   points: 0,
-  energy: 100,
+  energy: 1000,
   gamesPlayed: 0,
   progress: {},
   referralCode: "",
