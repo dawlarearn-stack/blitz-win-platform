@@ -20,6 +20,7 @@ function getDaysRemaining(r: Referral): number {
 
 const Dashboard = () => {
   const { data, claimReferral, spendPoints } = useGameStore();
+  const telegramUser = getTelegramUser();
   const dollarValue = getPointsDollarValue(data.points);
   const canWithdraw = parseFloat(dollarValue) >= 5;
   const [copied, setCopied] = useState(false);
@@ -27,8 +28,7 @@ const Dashboard = () => {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
-  // Use demo referrals if no real ones exist
-  const referrals = data.referrals.length > 0 ? data.referrals : DEMO_REFERRALS;
+  const referrals = data.referrals;
   const referralLink = `https://t.me/PGRmm_bot?start=${data.referralCode}`;
 
   const handleCopy = async () => {
