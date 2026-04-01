@@ -151,9 +151,11 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [getNextCheckinDay, addPoints, addEnergy]);
 
-  const claimLevelTask = useCallback((level: number) => {
+  const claimLevelTask = useCallback(async (level: number) => {
     const task = LEVEL_TASKS.find((t) => t.level === level);
     if (!task || daily.levelTasksClaimed.includes(level)) return;
+    const adWatched = await showRewardAd();
+    if (!adWatched) return;
     addPoints(task.points);
     if (task.energy > 0) addEnergy(task.energy);
     setDaily((prev) => {
