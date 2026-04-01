@@ -97,8 +97,9 @@ const ReactionTap = () => {
     };
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("reaction-tap", level);
+    if (!ok) return;
     cleanup();
     setGameState("playing");
     setHits(0);
