@@ -1,5 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from '@supabase/supabase-js/cors'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-key',
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,7 +36,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (receipt_last4.length !== 4) {
+    if (String(receipt_last4).length !== 4) {
       return new Response(JSON.stringify({ error: 'Receipt last 4 digits must be exactly 4 characters' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -45,7 +49,7 @@ Deno.serve(async (req) => {
       .select('id')
       .eq('telegram_id', telegram_id)
       .eq('status', 'pending')
-      .single()
+      .maybeSingle()
 
     if (existing) {
       return new Response(JSON.stringify({ error: 'You already have a pending payment request' }), {
@@ -54,21 +58,25 @@ Deno.serve(async (req) => {
       })
     }
 
-    const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+    const expires_at = new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
-    // Use a placeholder user_id since we're using telegram_id as identifier
-    // We need a valid UUID for the foreign key - use a deterministic one based on telegram_id
-    const { data, error } = await supabase.rpc('create_payment_request', {
-      p_telegram_id: telegram_id,
-      p_energy_amount: energy_amount,
-      p_price_mmk: price_mmk,
-      p_payment_method: payment_method,
-      p_receipt_last4: receipt_last4,
-      p_sender_name: sender_name,
-      p_sender_phone: sender_phone,
-      p_screenshot_url: screenshot_url || null,
-      p_expires_at: expires_at,
-    })
+    // Insert directly using service role (bypasses RLS)
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .insert({
+        telegram_id,
+        energy_amount,
+        price_mmk,
+        payment_method,
+        receipt_last4: String(receipt_last4),
+        sender_name,
+        sender_phone,
+        screenshot_url: screenshot_url || null,
+        expires_at,
+        user_id: null,
+      })
+      .select('id')
+      .single()
 
     if (error) {
       console.error('Insert error:', error)
@@ -78,7 +86,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ success: true, id: data }), {
+    return new Response(JSON.stringify({ success: true, id: data.id }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (err) {
