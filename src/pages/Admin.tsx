@@ -629,8 +629,6 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
   );
 }
 
-// Missing import for ArrowRightLeft - adding inline
-import { ArrowRightLeft } from "lucide-react";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
