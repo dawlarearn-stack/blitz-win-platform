@@ -54,7 +54,7 @@ function generateCards(level: number) {
 type Card = { id: number; emoji: string; flipped: boolean; matched: boolean };
 
 const MemoryMatch = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["memory-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
