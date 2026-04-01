@@ -66,8 +66,9 @@ const WhackAMole = () => {
   const hitsNeeded = getHitsNeeded(level);
   const maxMisses = 3;
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("whack-a-mole", level);
+    if (!ok) return;
     setGameState("playing");
     setHits(0);
     setMisses(0);
@@ -76,7 +77,7 @@ const WhackAMole = () => {
     setActiveCells(new Map());
     setEarnedPoints(0);
     setTapped(null);
-  }, [spendEnergy]);
+  }, [startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
