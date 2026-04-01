@@ -5,6 +5,7 @@ import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 import { showRewardAd } from "@/lib/adsgram";
+import { trackNextLevel } from "@/lib/monetag";
 
 function getHitsNeeded(level: number): number {
   return Math.min(5 + Math.floor(level * 0.12), 15);
