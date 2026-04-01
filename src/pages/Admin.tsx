@@ -23,7 +23,7 @@ interface PaymentRequest {
   telegram_id: string | null;
   energy_amount: number;
   price_mmk: string;
-  payment_method: "kpay" | "wavepay";
+  payment_method: "kpay" | "wavepay" | "binance";
   receipt_last4: string;
   sender_name: string;
   sender_phone: string;
