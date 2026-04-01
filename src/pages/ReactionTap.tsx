@@ -56,7 +56,7 @@ const ARENA_SIZE = 400;
 const TIME_LIMIT = 30;
 
 const ReactionTap = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["reaction-tap"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
