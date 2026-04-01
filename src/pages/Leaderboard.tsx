@@ -1,9 +1,7 @@
 import { motion } from "framer-motion";
-import { Trophy, Medal, Star, Users, UserPlus } from "lucide-react";
+import { Trophy, Medal, Star, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import WeeklyInviteLeaderboard from "@/components/WeeklyInviteLeaderboard";
 import { checkAndDistributeRewards } from "@/lib/weeklyLeaderboard";
 import { useEffect } from "react";
