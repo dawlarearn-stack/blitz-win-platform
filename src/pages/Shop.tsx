@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote } from "lucide-react";
+import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History } from "lucide-react";
 import MMKPaymentFlow from "@/components/MMKPaymentFlow";
+import PaymentHistory from "@/components/PaymentHistory";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import {
@@ -153,6 +154,11 @@ const Shop = () => {
                 />
               ))}
             </div>
+          </Section>
+
+          {/* Payment History */}
+          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
+            <PaymentHistory />
           </Section>
 
           {/* Points → Energy */}
