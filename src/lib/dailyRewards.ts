@@ -205,6 +205,21 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daily, tick]);
 
+  const canClaimFreeEnergy = useCallback((): boolean => {
+    if (daily.freeEnergyClaimed) return false;
+    return REQUIRED_AD_TASKS_FOR_FREE_ENERGY.every((id) => daily.adClaimed.includes(id));
+  }, [daily]);
+
+  const claimFreeEnergy = useCallback(() => {
+    if (!canClaimFreeEnergy()) return;
+    addEnergy(DAILY_FREE_ENERGY);
+    setDaily((prev) => {
+      const next = { ...prev, freeEnergyClaimed: true };
+      save(next);
+      return next;
+    });
+  }, [canClaimFreeEnergy, addEnergy]);
+
   return {
     daily,
     getNextCheckinDay,
@@ -213,5 +228,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     watchAd,
     claimAdReward,
     getCooldownRemaining,
+    canClaimFreeEnergy,
+    claimFreeEnergy,
   };
 }
