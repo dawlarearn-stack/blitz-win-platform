@@ -66,7 +66,7 @@ function generateProblem(level: number) {
 }
 
 const QuickMath = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["quick-math"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
