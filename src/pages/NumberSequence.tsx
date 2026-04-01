@@ -134,8 +134,7 @@ const NumberSequence = () => {
           playLevelWin();
           const pts = getPointsForLevel(level);
           setEarnedPoints(pts);
-          addPoints(pts);
-          updateProgress("number-sequence", level);
+          completeLevel("number-sequence", level, true);
           setGameState("won");
         } else {
           setRound((r) => r + 1);
