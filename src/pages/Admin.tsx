@@ -135,7 +135,7 @@ const Admin = () => {
   }, [adminKey, baseUrl, anonKey]);
 
   const fetchData = useCallback(async () => {
-    if (!adminKey || tab === "config") return;
+    if (!adminKey || tab === "config" || tab === "security") return;
     setLoading(true);
     try {
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
