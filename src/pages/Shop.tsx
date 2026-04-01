@@ -59,10 +59,11 @@ const Shop = () => {
       setMmkFlowOpen(true);
       return;
     }
-    setSelectedPack(pack);
-    setSelectedConversion(null);
-    setResultMsg(null);
-    setModal(type);
+    if (type === "usd") {
+      setUsdFlowPack(pack);
+      setUsdFlowOpen(true);
+      return;
+    }
   };
 
   const openConvert = (conv: ConversionOption) => {
