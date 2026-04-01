@@ -64,10 +64,21 @@ interface AdminStats {
   activeUsers: number;
   pendingPayments: number;
   pendingWithdrawals: number;
+  suspiciousCount: number;
+}
+
+interface SuspiciousLog {
+  id: string;
+  telegram_id: string;
+  action_type: string;
+  details: any;
+  ip_address: string | null;
+  device_info: string | null;
+  created_at: string;
 }
 
 type StatusFilter = "pending" | "approved" | "rejected";
-type TabType = "payments" | "withdrawals" | "config";
+type TabType = "payments" | "withdrawals" | "config" | "security";
 
 const Admin = () => {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
