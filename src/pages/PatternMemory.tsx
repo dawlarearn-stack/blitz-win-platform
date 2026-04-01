@@ -26,7 +26,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const PatternMemory = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["pattern-memory"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "showing" | "input" | "won" | "lost">("idle");
