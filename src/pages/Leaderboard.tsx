@@ -19,17 +19,6 @@ const MOCK_PLAYERS = [
   { rank: 10, name: "LightPulse", points: 9500, gamesPlayed: 148 },
 ];
 
-const MOCK_INVITERS = Array.from({ length: 99 }, (_, i) => ({
-  rank: i + 1,
-  name: [
-    "moonK", "playerX", "gamer88", "NeonBoss", "CryptoWolf",
-    "PixelQueen", "ByteKing", "StarNova", "DarkPhoenix", "GlowRider",
-    "FlashByte", "VoidHunter", "LightCoder", "CyberPunk", "NeonDrift",
-    "TurboMax", "QuantumX", "BlazeFire", "StormEdge", "IronWave",
-  ][i % 20] + (i >= 20 ? `${Math.floor(i / 20) + 1}` : ""),
-  invites: Math.max(82 - i, 1),
-}));
-
 const getRankIcon = (rank: number) => {
   if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-400" />;
   if (rank === 2) return <Medal className="w-5 h-5 text-gray-300" />;
