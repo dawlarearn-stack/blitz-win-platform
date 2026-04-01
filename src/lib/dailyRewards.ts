@@ -161,7 +161,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [daily, addPoints, addEnergy]);
 
-  const watchAd = useCallback((taskId: string) => {
+  const watchAd = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
     if (!task) return;
     const current = daily.adProgress[taskId] || 0;
@@ -171,6 +171,9 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
       const last = daily.adLastWatch[taskId] || 0;
       if (Date.now() - last < task.cooldown * 1000) return;
     }
+    // Show rewarded ad
+    const adWatched = await showRewardAd();
+    if (!adWatched) return; // ad skipped or failed — don't count
     setDaily((prev) => {
       const next = {
         ...prev,
