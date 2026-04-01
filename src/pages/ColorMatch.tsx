@@ -43,7 +43,7 @@ function pickRandom<T>(arr: T[], exclude?: T): T {
 }
 
 const ColorMatch = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["color-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
