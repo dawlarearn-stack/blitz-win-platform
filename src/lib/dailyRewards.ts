@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { showRewardAd } from "@/lib/adsgram";
+import { showMonetangRewardAd } from "@/lib/monetag";
 const DAILY_KEY = "pgr_daily_rewards";
 
 export interface CheckinDay {
