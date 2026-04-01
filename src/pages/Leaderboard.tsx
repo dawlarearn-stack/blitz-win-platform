@@ -33,19 +33,7 @@ const getRankStyle = (rank: number) => {
   return "border-border/50";
 };
 
-const getRankEmoji = (rank: number) => {
-  if (rank === 1) return "🥇";
-  if (rank === 2) return "🥈";
-  if (rank === 3) return "🥉";
-  return null;
-};
 
-const getInviterGlow = (rank: number) => {
-  if (rank === 1) return "0 0 20px hsl(50 100% 50% / 0.3)";
-  if (rank === 2) return "0 0 15px hsl(0 0% 75% / 0.25)";
-  if (rank === 3) return "0 0 15px hsl(30 80% 45% / 0.25)";
-  return undefined;
-};
 
 const Leaderboard = () => {
   const { data, addPoints } = useGameStore();
