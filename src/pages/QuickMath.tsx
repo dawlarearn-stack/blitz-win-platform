@@ -92,7 +92,7 @@ const QuickMath = () => {
     if (gameState !== "playing") return;
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) { clearInterval(timerRef.current); playGameOver(); setGameState("lost"); return 0; }
+        if (t <= 1) { clearInterval(timerRef.current); playGameOver(); setGameState("lost"); completeLevel("quick-math", level, false); return 0; }
         return t - 1;
       });
     }, 1000);
