@@ -131,7 +131,7 @@ const MemoryMatch = () => {
         }
       }
     },
-    [cards, selected, gameState, moves, level, maxMoves, addPoints, updateProgress]
+    [cards, selected, gameState, moves, level, maxMoves, completeLevel]
   );
 
   const startGame = useCallback(() => {
