@@ -285,6 +285,7 @@ export function useGameStore() {
   return {
     data,
     loading,
+    startingLevel,
     addPoints,
     addEnergy,
     spendPoints,
