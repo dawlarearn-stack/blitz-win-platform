@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 function getOptionsCount(level: number): number {
   if (level <= 10) return 3;
@@ -169,7 +170,7 @@ const NumberSequence = () => {
   }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
     <GameLayout title="Number Sequence" level={level} points={data.points} energy={data.energy}>

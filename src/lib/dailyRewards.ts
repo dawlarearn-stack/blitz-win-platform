@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-
+import { showRewardAd } from "@/lib/adsgram";
 const DAILY_KEY = "pgr_daily_rewards";
 
 export interface CheckinDay {
@@ -131,9 +131,11 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     return 1;
   }, [daily]);
 
-  const claimCheckin = useCallback(() => {
+  const claimCheckin = useCallback(async () => {
     const nextDay = getNextCheckinDay();
     if (nextDay < 1) return;
+    const adWatched = await showRewardAd();
+    if (!adWatched) return;
     const reward = CHECKIN_REWARDS[nextDay - 1];
     addPoints(reward.points);
     addEnergy(reward.energy);
@@ -149,9 +151,11 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [getNextCheckinDay, addPoints, addEnergy]);
 
-  const claimLevelTask = useCallback((level: number) => {
+  const claimLevelTask = useCallback(async (level: number) => {
     const task = LEVEL_TASKS.find((t) => t.level === level);
     if (!task || daily.levelTasksClaimed.includes(level)) return;
+    const adWatched = await showRewardAd();
+    if (!adWatched) return;
     addPoints(task.points);
     if (task.energy > 0) addEnergy(task.energy);
     setDaily((prev) => {
@@ -161,7 +165,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [daily, addPoints, addEnergy]);
 
-  const watchAd = useCallback((taskId: string) => {
+  const watchAd = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
     if (!task) return;
     const current = daily.adProgress[taskId] || 0;
@@ -171,6 +175,9 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
       const last = daily.adLastWatch[taskId] || 0;
       if (Date.now() - last < task.cooldown * 1000) return;
     }
+    // Show rewarded ad
+    const adWatched = await showRewardAd();
+    if (!adWatched) return; // ad skipped or failed — don't count
     setDaily((prev) => {
       const next = {
         ...prev,
@@ -182,7 +189,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [daily]);
 
-  const claimAdReward = useCallback((taskId: string) => {
+  const claimAdReward = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
     if (!task || daily.adClaimed.includes(taskId)) return;
     const progress = daily.adProgress[taskId] || 0;

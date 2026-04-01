@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw, Keyboard } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 const WORDS = [
   "play", "game", "coin", "luck", "fast", "hero", "bomb", "star", "fire", "gold",
@@ -107,7 +108,7 @@ const SpeedType = () => {
   };
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
     <GameLayout title="Speed Type" level={level} points={data.points} energy={data.energy}>

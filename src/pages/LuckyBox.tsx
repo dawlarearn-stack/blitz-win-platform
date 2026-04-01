@@ -4,6 +4,7 @@ import { ArrowRight, Gift } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 const TOTAL_BOXES = 15;
 const PICKS_PER_LEVEL = 3;
@@ -168,7 +169,7 @@ const LuckyBox = () => {
   }, [boxes, gameState, picksLeft, level, totalRoundPoints, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   const getBoxStyle = (box: BoxState, idx: number) => {
     if (!box.revealed) {

@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
+import { showRewardAd } from "@/lib/adsgram";
 
 function getHitsNeeded(level: number): number {
   return Math.min(5 + Math.floor(level * 0.12), 15);
@@ -169,7 +170,7 @@ const WhackAMole = () => {
   }, [gameState, activeCells, hitsNeeded, level, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   const gridSize = getGridSize(level);
   const cols = gridSize <= 9 ? 3 : 4;
