@@ -35,7 +35,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const SpeedType = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["speed-type"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
