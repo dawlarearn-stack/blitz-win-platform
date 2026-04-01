@@ -49,15 +49,8 @@ const Admin = () => {
     if (!adminKey) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-payments", {
-        method: "GET",
-        headers: { "x-admin-key": adminKey },
-        body: undefined,
-      });
-      // Edge function GET with query params isn't directly supported via invoke,
-      // so we use the full URL approach
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/admin-payments?status=${filter}`;
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const url = `${baseUrl}/functions/v1/admin-payments?status=${filter}`;
       const resp = await fetch(url, {
         headers: {
           "x-admin-key": adminKey,
