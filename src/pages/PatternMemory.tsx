@@ -93,6 +93,7 @@ const PatternMemory = () => {
         setActiveCell(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("pattern-memory", level, false);
       }, 400);
     }
   };

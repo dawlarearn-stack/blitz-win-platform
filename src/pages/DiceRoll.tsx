@@ -75,10 +75,10 @@ const DiceRoll = () => {
       } else {
         playClickBomb();
         setLastResult("wrong");
-        setTimeout(() => { playGameOver(); setGameState("lost"); }, 600);
+        setTimeout(() => { playGameOver(); setGameState("lost"); completeLevel("dice-roll", level, false); }, 600);
       }
     }, 700);
-  }, [gameState, wins, winsNeeded, level, addPoints, updateProgress]);
+  }, [gameState, wins, winsNeeded, level, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

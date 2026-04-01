@@ -163,11 +163,10 @@ const WhackAMole = () => {
       playLevelWin();
       const pts = getPointsForLevel(level);
       setEarnedPoints(pts);
-      addPoints(pts);
-      updateProgress("whack-a-mole", level);
+      completeLevel("whack-a-mole", level, true);
       setGameState("won");
     }
-  }, [gameState, activeCells, hitsNeeded, level, addPoints, updateProgress]);
+  }, [gameState, activeCells, hitsNeeded, level, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

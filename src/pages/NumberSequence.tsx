@@ -155,8 +155,9 @@ const NumberSequence = () => {
     }
   }, [gameState, feedback, puzzle, correct, roundsNeeded, level, completeLevel]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("number-sequence", level);
+    if (!ok) return;
     setPuzzle(generateSequence(level));
     setRound(0);
     setCorrect(0);
@@ -165,7 +166,7 @@ const NumberSequence = () => {
     setEarnedPoints(0);
     setFeedback(null);
     setFeedbackCorrect(false);
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };
