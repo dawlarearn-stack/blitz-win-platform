@@ -112,6 +112,7 @@ const WhackAMole = () => {
               clearInterval(intervalRef.current);
               playGameOver();
               setGameState("lost");
+              completeLevel("whack-a-mole", level, false);
               setMisses(missesRef.current);
             }
           }
