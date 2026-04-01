@@ -10,7 +10,7 @@ declare global {
 }
 
 function isTelegramWebApp(): boolean {
-  return !!(window as any).Telegram?.WebApp?.initData;
+  return !!(window as any).Telegram?.WebApp;
 }
 
 /* ─── Interstitial (In-App) ─── */
