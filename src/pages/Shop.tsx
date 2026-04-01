@@ -50,6 +50,11 @@ const Shop = () => {
   const [mmkFlowPack, setMmkFlowPack] = useState<EnergyPack | null>(null);
 
   const openBuy = (pack: EnergyPack, type: "usd" | "wavepay") => {
+    if (type === "wavepay") {
+      setMmkFlowPack(pack);
+      setMmkFlowOpen(true);
+      return;
+    }
     setSelectedPack(pack);
     setSelectedConversion(null);
     setResultMsg(null);
