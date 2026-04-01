@@ -178,7 +178,15 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* MMK Payment Flow */}
+      <MMKPaymentFlow
+        open={mmkFlowOpen}
+        onOpenChange={setMmkFlowOpen}
+        pack={mmkFlowPack}
+        onComplete={() => setMmkFlowOpen(false)}
+      />
+
+      {/* Confirmation Modal (USD & Points) */}
       <Dialog open={modal !== null} onOpenChange={(o) => !o && setModal(null)}>
         <DialogContent className="gradient-card border-border/50 max-w-sm">
           <DialogHeader>
