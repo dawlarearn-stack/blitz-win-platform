@@ -75,7 +75,36 @@ const Dashboard = () => {
       <div className="pt-20 md:pt-24 pb-20 px-4">
         <div className="container max-w-3xl">
           <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground mb-8 text-sm">Track your earnings and game progress.</p>
+          <p className="text-muted-foreground mb-4 text-sm">Track your earnings and game progress.</p>
+
+          {/* Telegram User Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="gradient-card rounded-2xl p-4 border border-primary/20 mb-6"
+            style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.1)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-sm font-bold text-foreground truncate">
+                  {telegramUser.firstName || telegramUser.username || "Player"}
+                </p>
+                {telegramUser.username && (
+                  <div className="flex items-center gap-1">
+                    <AtSign className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{telegramUser.username}</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">User ID</p>
+                <p className="font-display text-xs font-bold text-primary">{telegramUser.id}</p>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
