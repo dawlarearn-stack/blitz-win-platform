@@ -113,8 +113,7 @@ const QuickMath = () => {
           playLevelWin();
           const pts = getPointsForLevel(level);
           setEarnedPoints(pts);
-          addPoints(pts);
-          updateProgress("quick-math", level);
+          completeLevel("quick-math", level, true);
           setGameState("won");
         } else {
           setProblem(generateProblem(level));
