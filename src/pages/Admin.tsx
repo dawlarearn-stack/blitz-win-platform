@@ -163,10 +163,24 @@ const Admin = () => {
     }
   }, [adminKey, filter, tab, baseUrl, anonKey]);
 
+  const fetchSuspicious = useCallback(async () => {
+    if (!adminKey) return;
+    setLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=suspicious`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const result = await resp.json();
+      if (resp.ok && result.data) setSuspiciousLogs(result.data);
+    } catch {}
+    setLoading(false);
+  }, [adminKey, baseUrl, anonKey]);
+
   useEffect(() => {
     if (adminKey) {
       fetchStats();
       if (tab === "config") fetchConfig();
+      else if (tab === "security") fetchSuspicious();
       else fetchData();
     }
   }, [adminKey, filter, tab, fetchData, fetchStats, fetchConfig]);
