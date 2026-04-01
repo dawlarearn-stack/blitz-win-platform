@@ -112,7 +112,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      payment_method: "kpay" | "wavepay"
+      payment_method: "kpay" | "wavepay" | "binance"
       payment_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -242,7 +242,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      payment_method: ["kpay", "wavepay"],
+      payment_method: ["kpay", "wavepay", "binance"],
       payment_status: ["pending", "approved", "rejected"],
     },
   },
