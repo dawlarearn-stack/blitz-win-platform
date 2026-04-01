@@ -78,6 +78,7 @@ function getDefaults(): DailyData {
     adClaimed: [],
     adLastWatch: {},
     resetDate: today(),
+    freeEnergyClaimed: false,
   };
 }
 
