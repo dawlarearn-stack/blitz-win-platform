@@ -56,6 +56,72 @@ export type Database = {
         }
         Relationships: []
       }
+      device_fingerprints: {
+        Row: {
+          fingerprint: string
+          first_seen_at: string
+          id: string
+          ip_address: string | null
+          last_seen_at: string
+          telegram_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          fingerprint: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          telegram_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          fingerprint?: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          telegram_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      game_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          game_id: string
+          id: string
+          level: number
+          points_awarded: number | null
+          started_at: string
+          status: string
+          telegram_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          game_id: string
+          id?: string
+          level?: number
+          points_awarded?: number | null
+          started_at?: string
+          status?: string
+          telegram_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          game_id?: string
+          id?: string
+          level?: number
+          points_awarded?: number | null
+          started_at?: string
+          status?: string
+          telegram_id?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           created_at: string
@@ -107,6 +173,36 @@ export type Database = {
         }
         Relationships: []
       }
+      suspicious_activity: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          device_info: string | null
+          id: string
+          ip_address: string | null
+          telegram_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          telegram_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          telegram_id?: string
+        }
+        Relationships: []
+      }
       telegram_bot_state: {
         Row: {
           id: number
@@ -121,6 +217,39 @@ export type Database = {
         Update: {
           id?: number
           update_offset?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_game_state: {
+        Row: {
+          created_at: string
+          energy: number
+          games_played: number
+          points: number
+          progress: Json
+          referral_code: string
+          telegram_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          energy?: number
+          games_played?: number
+          points?: number
+          progress?: Json
+          referral_code?: string
+          telegram_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          energy?: number
+          games_played?: number
+          points?: number
+          progress?: Json
+          referral_code?: string
+          telegram_id?: string
           updated_at?: string
         }
         Relationships: []
