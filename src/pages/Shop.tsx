@@ -156,6 +156,11 @@ const Shop = () => {
             </div>
           </Section>
 
+          {/* Payment History */}
+          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
+            <PaymentHistory />
+          </Section>
+
           {/* Points → Energy */}
           <Section title="Points → Energy" icon={<ArrowRightLeft className="w-4 h-4 text-primary" />}>
             <div className="grid grid-cols-2 gap-3">

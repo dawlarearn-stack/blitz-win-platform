@@ -26,6 +26,23 @@ Deno.serve(async (req) => {
       })
     }
 
+    const fetchAll = url.searchParams.get('all') === 'true'
+
+    if (fetchAll) {
+      const { data, error } = await supabase
+        .from('payment_requests')
+        .select('id, energy_amount, price_mmk, payment_method, status, created_at, receipt_last4')
+        .eq('telegram_id', telegramId)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+
+      return new Response(JSON.stringify({ data: data || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { data, error } = await supabase
       .from('payment_requests')
       .select('*')
