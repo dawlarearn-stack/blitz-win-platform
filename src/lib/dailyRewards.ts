@@ -49,6 +49,9 @@ export const AD_TASKS: AdTask[] = [
   { id: "ad5", label: "Daily Ad Watch Bonus 5", required: 5, rewardPoints: 0, rewardEnergy: 5, provider: "AdsGram", cooldown: 60 },
 ];
 
+export const DAILY_FREE_ENERGY = 1000;
+export const REQUIRED_AD_TASKS_FOR_FREE_ENERGY = ["ad1", "ad2", "ad3"];
+
 export interface DailyData {
   lastCheckinDate: string; // YYYY-MM-DD
   checkinStreak: number; // 0-6 index of last claimed day
@@ -58,6 +61,7 @@ export interface DailyData {
   adClaimed: string[]; // ad task ids claimed
   adLastWatch: Record<string, number>; // ad task id -> timestamp of last watch
   resetDate: string; // YYYY-MM-DD when data was last reset
+  freeEnergyClaimed: boolean; // whether daily free energy was claimed
 }
 
 function today(): string {
@@ -74,6 +78,7 @@ function getDefaults(): DailyData {
     adClaimed: [],
     adLastWatch: {},
     resetDate: today(),
+    freeEnergyClaimed: false,
   };
 }
 
@@ -86,11 +91,11 @@ function load(): DailyData {
       const data = { ...defaults, ...parsed };
       // Reset daily tasks if new day
       if (data.resetDate !== today()) {
-        // Keep checkin streak logic but reset daily tasks
         data.levelTasksClaimed = [];
         data.adProgress = {};
         data.adClaimed = [];
         data.adLastWatch = {};
+        data.freeEnergyClaimed = false;
         data.resetDate = today();
       }
       return data;
@@ -200,6 +205,21 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daily, tick]);
 
+  const canClaimFreeEnergy = useCallback((): boolean => {
+    if (daily.freeEnergyClaimed) return false;
+    return REQUIRED_AD_TASKS_FOR_FREE_ENERGY.every((id) => daily.adClaimed.includes(id));
+  }, [daily]);
+
+  const claimFreeEnergy = useCallback(() => {
+    if (!canClaimFreeEnergy()) return;
+    addEnergy(DAILY_FREE_ENERGY);
+    setDaily((prev) => {
+      const next = { ...prev, freeEnergyClaimed: true };
+      save(next);
+      return next;
+    });
+  }, [canClaimFreeEnergy, addEnergy]);
+
   return {
     daily,
     getNextCheckinDay,
@@ -208,5 +228,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     watchAd,
     claimAdReward,
     getCooldownRemaining,
+    canClaimFreeEnergy,
+    claimFreeEnergy,
   };
 }

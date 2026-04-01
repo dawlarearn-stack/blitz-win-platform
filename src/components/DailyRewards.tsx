@@ -6,6 +6,8 @@ import {
   CHECKIN_REWARDS,
   LEVEL_TASKS,
   AD_TASKS,
+  DAILY_FREE_ENERGY,
+  REQUIRED_AD_TASKS_FOR_FREE_ENERGY,
   useDailyRewards,
 } from "@/lib/dailyRewards";
 import type { GameProgress } from "@/lib/gameStore";
@@ -244,10 +246,55 @@ function DailyAdWatch({
   addPoints: (n: number) => void;
   addEnergy: (n: number) => void;
 }) {
-  const { daily, watchAd, claimAdReward, getCooldownRemaining } = useDailyRewards(addPoints, addEnergy);
+  const { daily, watchAd, claimAdReward, getCooldownRemaining, canClaimFreeEnergy, claimFreeEnergy } = useDailyRewards(addPoints, addEnergy);
+
+  const requiredTasksDone = REQUIRED_AD_TASKS_FOR_FREE_ENERGY.filter((id) => daily.adClaimed.includes(id)).length;
+  const requiredTotal = REQUIRED_AD_TASKS_FOR_FREE_ENERGY.length;
 
   return (
     <CollapsiblePanel title="Daily Ad Watch Bonus" icon={Eye}>
+      {/* Free Energy Banner */}
+      <div className={`rounded-xl p-3 mb-4 border transition-all ${
+        daily.freeEnergyClaimed
+          ? "border-primary/30 bg-primary/5"
+          : canClaimFreeEnergy()
+          ? "border-primary neon-border animate-pulse"
+          : "border-accent/30 bg-accent/5"
+      }`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-accent" />
+            </div>
+            <div>
+              <p className="font-display text-sm font-bold text-foreground">
+                Daily Free Energy
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                Complete Ad Bonus 1, 2, 3 to unlock
+              </p>
+            </div>
+          </div>
+          <span className="text-accent font-display font-bold text-lg flex items-center gap-1">
+            <Zap className="w-4 h-4" /> {DAILY_FREE_ENERGY}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <Progress value={(requiredTasksDone / requiredTotal) * 100} className="h-2 bg-muted" />
+          </div>
+          <span className="text-[10px] text-muted-foreground font-display min-w-[2rem] text-right">
+            {requiredTasksDone}/{requiredTotal}
+          </span>
+          <ClaimButton
+            canClaim={canClaimFreeEnergy()}
+            claimed={daily.freeEnergyClaimed}
+            onClick={claimFreeEnergy}
+            small
+          />
+        </div>
+      </div>
+
       <div className="space-y-3">
         {AD_TASKS.map((task) => {
           const progress = daily.adProgress[task.id] || 0;
@@ -255,6 +302,7 @@ function DailyAdWatch({
           const completed = progress >= task.required;
           const cooldown = getCooldownRemaining(task.id);
           const pct = (progress / task.required) * 100;
+          const isRequired = REQUIRED_AD_TASKS_FOR_FREE_ENERGY.includes(task.id);
 
           return (
             <div
@@ -268,9 +316,16 @@ function DailyAdWatch({
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <span className="font-display text-xs md:text-sm text-foreground font-bold">
-                  {task.label}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-display text-xs md:text-sm text-foreground font-bold">
+                    {task.label}
+                  </span>
+                  {isRequired && (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/20 text-accent font-display font-bold">
+                      ⚡ Required
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-display">
                   {task.provider}
                 </span>

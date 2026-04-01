@@ -30,7 +30,7 @@ export interface UserData {
 
 const defaultData: UserData = {
   points: 0,
-  energy: 100,
+  energy: 1000,
   gamesPlayed: 0,
   progress: {},
   referralCode: "",
@@ -69,7 +69,7 @@ export function useGameStore() {
         if (resp.ok) {
           setData({
             points: result.points ?? 0,
-            energy: result.energy ?? 100,
+            energy: result.energy ?? 1000,
             gamesPlayed: result.games_played ?? 0,
             progress: result.progress ?? {},
             referralCode: result.referral_code ?? "",
