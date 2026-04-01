@@ -39,8 +39,9 @@ const PatternMemory = () => {
   const totalCells = gridSize * gridSize;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("pattern-memory", level);
+    if (!ok) return;
     const seq: number[] = [];
     for (let i = 0; i < seqLength; i++) {
       seq.push(Math.floor(Math.random() * totalCells));
