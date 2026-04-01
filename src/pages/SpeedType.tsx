@@ -35,7 +35,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const SpeedType = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["speed-type"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -56,15 +56,16 @@ const SpeedType = () => {
     setInput("");
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("speed-type", level);
+    if (!ok) return;
     setGameState("playing");
     setWordsTyped(0);
     setTimeLeft(timeLimit);
     setEarnedPoints(0);
     pickWord();
     setTimeout(() => inputRef.current?.focus(), 100);
-  }, [timeLimit, pickWord, spendEnergy]);
+  }, [timeLimit, pickWord, startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -74,6 +75,7 @@ const SpeedType = () => {
           clearInterval(timerRef.current);
           playGameOver();
           setGameState("lost");
+          completeLevel("speed-type", level, false);
           return 0;
         }
         return t - 1;
@@ -96,8 +98,7 @@ const SpeedType = () => {
         playLevelWin();
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("speed-type", level);
+        completeLevel("speed-type", level, true);
         setGameState("won");
       } else {
         pickWord();

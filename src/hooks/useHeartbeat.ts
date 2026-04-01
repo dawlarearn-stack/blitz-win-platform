@@ -1,13 +1,6 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-function getTelegramId(): string {
-  try {
-    const tg = (window as any).Telegram?.WebApp;
-    if (tg?.initDataUnsafe?.user?.id) return String(tg.initDataUnsafe.user.id);
-  } catch {}
-  return localStorage.getItem("pgr_telegram_id") || "unknown";
-}
+import { getTelegramId } from "@/lib/fingerprint";
 
 export function useHeartbeat(intervalMs = 60_000) {
   const sentRef = useRef(false);

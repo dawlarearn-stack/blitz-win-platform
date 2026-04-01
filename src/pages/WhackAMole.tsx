@@ -51,7 +51,7 @@ const MOLE_EMOJI = "🐹";
 const BAD_MOLE_EMOJI = "💀";
 
 const WhackAMole = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["whack-a-mole"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -66,8 +66,9 @@ const WhackAMole = () => {
   const hitsNeeded = getHitsNeeded(level);
   const maxMisses = 3;
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("whack-a-mole", level);
+    if (!ok) return;
     setGameState("playing");
     setHits(0);
     setMisses(0);
@@ -76,7 +77,7 @@ const WhackAMole = () => {
     setActiveCells(new Map());
     setEarnedPoints(0);
     setTapped(null);
-  }, [spendEnergy]);
+  }, [startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -111,6 +112,7 @@ const WhackAMole = () => {
               clearInterval(intervalRef.current);
               playGameOver();
               setGameState("lost");
+              completeLevel("whack-a-mole", level, false);
               setMisses(missesRef.current);
             }
           }
@@ -139,6 +141,7 @@ const WhackAMole = () => {
         setTapped(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("whack-a-mole", level, false);
       }, 500);
       return;
     }
@@ -160,11 +163,10 @@ const WhackAMole = () => {
       playLevelWin();
       const pts = getPointsForLevel(level);
       setEarnedPoints(pts);
-      addPoints(pts);
-      updateProgress("whack-a-mole", level);
+      completeLevel("whack-a-mole", level, true);
       setGameState("won");
     }
-  }, [gameState, activeCells, hitsNeeded, level, addPoints, updateProgress]);
+  }, [gameState, activeCells, hitsNeeded, level, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

@@ -56,7 +56,7 @@ const ARENA_SIZE = 400;
 const TIME_LIMIT = 30;
 
 const ReactionTap = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["reaction-tap"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -97,8 +97,9 @@ const ReactionTap = () => {
     };
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("reaction-tap", level);
+    if (!ok) return;
     cleanup();
     setGameState("playing");
     setHits(0);
@@ -155,7 +156,7 @@ const ReactionTap = () => {
         return t - 1;
       });
     }, 1000);
-  }, [level, cleanup]);
+  }, [level, cleanup, startLevel]);
 
   // Win/lose check
   useEffect(() => {
@@ -167,15 +168,15 @@ const ReactionTap = () => {
       const bonus = misses === 0 ? Math.floor(base * 0.5) : 0;
       const pts = base + bonus;
       setEarnedPoints(pts);
-      addPoints(pts);
-      updateProgress("reaction-tap", level);
+      completeLevel("reaction-tap", level, true);
       setGameState("won");
     } else if (timeLeft === 0) {
       cleanup();
       playGameOver();
       setGameState("lost");
+      completeLevel("reaction-tap", level, false);
     }
-  }, [hits, timeLeft, gameState, hitsNeeded, level, cleanup, addPoints, updateProgress, misses]);
+  }, [hits, timeLeft, gameState, hitsNeeded, level, cleanup, completeLevel, misses]);
 
   const addEffect = (x: number, y: number, type: "hit" | "miss") => {
     const id = Date.now() + Math.random();

@@ -26,7 +26,7 @@ function getPointsForLevel(level: number): number {
 }
 
 const PatternMemory = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["pattern-memory"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "showing" | "input" | "won" | "lost">("idle");
@@ -39,8 +39,9 @@ const PatternMemory = () => {
   const totalCells = gridSize * gridSize;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("pattern-memory", level);
+    if (!ok) return;
     const seq: number[] = [];
     for (let i = 0; i < seqLength; i++) {
       seq.push(Math.floor(Math.random() * totalCells));
@@ -65,7 +66,7 @@ const PatternMemory = () => {
       }
     };
     setTimeout(showNext, 500);
-  }, [seqLength, totalCells, spendEnergy]);
+  }, [seqLength, totalCells, startLevel, level]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
@@ -82,8 +83,7 @@ const PatternMemory = () => {
         playLevelWin();
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("pattern-memory", level);
+        completeLevel("pattern-memory", level, true);
         setGameState("won");
       }
     } else {
@@ -93,6 +93,7 @@ const PatternMemory = () => {
         setActiveCell(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("pattern-memory", level, false);
       }, 400);
     }
   };

@@ -66,7 +66,7 @@ function generateProblem(level: number) {
 }
 
 const QuickMath = () => {
-  const { data, addPoints, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["quick-math"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -78,19 +78,21 @@ const QuickMath = () => {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const problemsNeeded = getProblemsNeeded(level);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("quick-math", level);
+    if (!ok) return;
     setGameState("playing");
     setSolved(0);
     setTimeLeft(getTimeLimit(level));
     setEarnedPoints(0);
     setProblem(generateProblem(level));
-  }, [level]);
+  }, [level, startLevel]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
-        if (t <= 1) { clearInterval(timerRef.current); playGameOver(); setGameState("lost"); return 0; }
+        if (t <= 1) { clearInterval(timerRef.current); playGameOver(); setGameState("lost"); completeLevel("quick-math", level, false); return 0; }
         return t - 1;
       });
     }, 1000);
@@ -111,8 +113,7 @@ const QuickMath = () => {
           playLevelWin();
           const pts = getPointsForLevel(level);
           setEarnedPoints(pts);
-          addPoints(pts);
-          updateProgress("quick-math", level);
+          completeLevel("quick-math", level, true);
           setGameState("won");
         } else {
           setProblem(generateProblem(level));
@@ -121,7 +122,7 @@ const QuickMath = () => {
     } else {
       playClickBomb();
       setFeedback("wrong");
-      setTimeout(() => { setFeedback(null); clearInterval(timerRef.current); playGameOver(); setGameState("lost"); }, 500);
+      setTimeout(() => { setFeedback(null); clearInterval(timerRef.current); playGameOver(); setGameState("lost"); completeLevel("quick-math", level, false); }, 500);
     }
   };
 
@@ -129,7 +130,7 @@ const QuickMath = () => {
   const retry = () => setGameState("idle");
 
   return (
-    <GameLayout title="Quick Math" level={level} points={data.points}>
+    <GameLayout title="Quick Math" level={level} points={data.points} energy={data.energy}>
       <div className="w-full max-w-sm">
         {gameState === "idle" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">

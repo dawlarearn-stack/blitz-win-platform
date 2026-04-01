@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
-  Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft,
+  Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,10 +64,21 @@ interface AdminStats {
   activeUsers: number;
   pendingPayments: number;
   pendingWithdrawals: number;
+  suspiciousCount: number;
+}
+
+interface SuspiciousLog {
+  id: string;
+  telegram_id: string;
+  action_type: string;
+  details: any;
+  ip_address: string | null;
+  device_info: string | null;
+  created_at: string;
 }
 
 type StatusFilter = "pending" | "approved" | "rejected";
-type TabType = "payments" | "withdrawals" | "config";
+type TabType = "payments" | "withdrawals" | "config" | "security";
 
 const Admin = () => {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
@@ -83,7 +94,8 @@ const Admin = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Stats
-  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0 });
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0 });
+  const [suspiciousLogs, setSuspiciousLogs] = useState<SuspiciousLog[]>([]);
 
   // Config
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
@@ -123,7 +135,7 @@ const Admin = () => {
   }, [adminKey, baseUrl, anonKey]);
 
   const fetchData = useCallback(async () => {
-    if (!adminKey || tab === "config") return;
+    if (!adminKey || tab === "config" || tab === "security") return;
     setLoading(true);
     try {
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
@@ -151,10 +163,24 @@ const Admin = () => {
     }
   }, [adminKey, filter, tab, baseUrl, anonKey]);
 
+  const fetchSuspicious = useCallback(async () => {
+    if (!adminKey) return;
+    setLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=suspicious`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const result = await resp.json();
+      if (resp.ok && result.data) setSuspiciousLogs(result.data);
+    } catch {}
+    setLoading(false);
+  }, [adminKey, baseUrl, anonKey]);
+
   useEffect(() => {
     if (adminKey) {
       fetchStats();
       if (tab === "config") fetchConfig();
+      else if (tab === "security") fetchSuspicious();
       else fetchData();
     }
   }, [adminKey, filter, tab, fetchData, fetchStats, fetchConfig]);
@@ -276,7 +302,7 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="font-display text-xl font-bold text-foreground">Admin</h1>
             </div>
-            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); }} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); if (tab === "security") fetchSuspicious(); }} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </motion.div>
@@ -288,6 +314,7 @@ const Admin = () => {
             <StatsCard icon={<Activity className="w-4 h-4" />} label="Online Now" value={stats.activeUsers} color="text-green-500" pulse />
             <StatsCard icon={<Zap className="w-4 h-4" />} label="Pending Payments" value={stats.pendingPayments} color="text-yellow-500" />
             <StatsCard icon={<Wallet className="w-4 h-4" />} label="Pending Withdrawals" value={stats.pendingWithdrawals} color="text-accent" />
+            <StatsCard icon={<AlertTriangle className="w-4 h-4" />} label="Suspicious" value={stats.suspiciousCount} color="text-destructive" />
           </motion.div>
 
           {/* Tab switcher */}
@@ -307,10 +334,65 @@ const Admin = () => {
               onClick={() => setTab("config")}>
               <Settings className="w-3 h-3" /> Pricing
             </Button>
+            <Button variant={tab === "security" ? "default" : "outline"} size="sm"
+              className={`font-display text-xs ${tab === "security" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => setTab("security")}>
+              <AlertTriangle className="w-3 h-3" /> Security
+            </Button>
           </div>
 
-          {/* Config Tab */}
-          {tab === "config" ? (
+          {/* Security Tab */}
+          {tab === "security" ? (
+            <ScrollArea className="h-[calc(100vh-380px)]">
+              {loading ? (
+                <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
+              ) : suspiciousLogs.length === 0 ? (
+                <div className="text-center py-10">
+                  <Shield className="w-10 h-10 text-primary mx-auto mb-2 opacity-50" />
+                  <p className="text-muted-foreground text-sm font-display">No suspicious activity</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {suspiciousLogs.map((log) => (
+                    <motion.div key={log.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                      className="gradient-card rounded-xl p-4 border border-border/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="destructive" className="text-[10px] font-display">
+                          {log.action_type.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
+                        <span className="text-muted-foreground text-[10px]">
+                          {new Date(log.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Telegram ID</span>
+                          <span className="text-foreground font-bold">{log.telegram_id}</span>
+                        </div>
+                        {log.ip_address && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">IP</span>
+                            <span className="text-foreground">{log.ip_address}</span>
+                          </div>
+                        )}
+                        {log.device_info && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Device</span>
+                            <span className="text-foreground text-[10px] max-w-[200px] truncate">{log.device_info}</span>
+                          </div>
+                        )}
+                        {log.details && Object.keys(log.details).length > 0 && (
+                          <div className="mt-2 p-2 rounded-lg bg-secondary/50 text-[10px] text-muted-foreground font-mono break-all">
+                            {JSON.stringify(log.details, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          ) : tab === "config" ? (
             <ConfigPanel
               energyPacks={energyPacks}
               conversions={conversions}

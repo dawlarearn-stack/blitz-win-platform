@@ -68,7 +68,7 @@ interface Particle {
 }
 
 const LuckyBox = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["lucky-box"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [boxes, setBoxes] = useState<BoxState[]>(() => generateBoxes(level));
@@ -100,8 +100,9 @@ const LuckyBox = () => {
     setTimeout(() => setParticles((p) => p.filter((pp) => !ps.find((np) => np.id === pp.id))), 700);
   };
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("lucky-box", level);
+    if (!ok) return;
     setBoxes(generateBoxes(level));
     setPicksLeft(PICKS_PER_LEVEL);
     setGameState("playing");
@@ -109,7 +110,7 @@ const LuckyBox = () => {
     setTotalRoundPoints(0);
     setParticles([]);
     setLastRevealedIdx(null);
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const handleOpen = useCallback((index: number) => {
     if (gameState !== "playing" || boxes[index].revealed || picksLeft <= 0) return;
@@ -127,6 +128,7 @@ const LuckyBox = () => {
         playGameOver();
         setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
         setGameState("lost");
+        completeLevel("lucky-box", level, false);
       }, 600);
     } else if (content === "reward") {
       playClickSafe();
@@ -140,8 +142,7 @@ const LuckyBox = () => {
           playLevelWin();
           const finalPts = totalRoundPoints + pts;
           setEarnedPoints(finalPts);
-          addPoints(finalPts);
-          updateProgress("lucky-box", level);
+          completeLevel("lucky-box", level, true);
           setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
           setGameState("won");
         }, 500);
@@ -158,14 +159,13 @@ const LuckyBox = () => {
           playLevelWin();
           const finalPts = totalRoundPoints + pts;
           setEarnedPoints(finalPts);
-          addPoints(finalPts);
-          updateProgress("lucky-box", level);
+          completeLevel("lucky-box", level, true);
           setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
           setGameState("won");
         }, 500);
       }
     }
-  }, [boxes, gameState, picksLeft, level, totalRoundPoints, addPoints, updateProgress]);
+  }, [boxes, gameState, picksLeft, level, totalRoundPoints, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

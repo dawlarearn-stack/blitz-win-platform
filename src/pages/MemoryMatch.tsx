@@ -54,7 +54,7 @@ function generateCards(level: number) {
 type Card = { id: number; emoji: string; flipped: boolean; matched: boolean };
 
 const MemoryMatch = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["memory-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [cards, setCards] = useState<Card[]>(() => generateCards(level));
@@ -102,8 +102,7 @@ const MemoryMatch = () => {
                 const bonus = Math.max(0, Math.floor(movesLeft * 0.5));
                 const pts = basePts + bonus;
                 setEarnedPoints(pts);
-                addPoints(pts);
-                updateProgress("memory-match", level);
+                completeLevel("memory-match", level, true);
                 setGameState("won");
               }
               return updated;
@@ -126,16 +125,18 @@ const MemoryMatch = () => {
             if (newMoves >= maxMoves) {
               playGameOver();
               setGameState("lost");
+              completeLevel("memory-match", level, false);
             }
           }, 800);
         }
       }
     },
-    [cards, selected, gameState, moves, level, maxMoves, addPoints, updateProgress]
+    [cards, selected, gameState, moves, level, maxMoves, completeLevel]
   );
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("memory-match", level);
+    if (!ok) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
@@ -144,7 +145,7 @@ const MemoryMatch = () => {
     setSparkleIds([]);
     setEarnedPoints(0);
     setGameState("playing");
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

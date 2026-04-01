@@ -64,7 +64,7 @@ function generateGrid(bombs: number): Cell[] {
 }
 
 const BombFinder = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["bomb-finder"];
   const [level, setLevel] = useState(progress?.currentLevel ? progress.currentLevel + 1 : 1);
 
@@ -119,6 +119,7 @@ const BombFinder = () => {
         playGameOver();
       }, 300);
       setGameState("lost");
+      completeLevel("bomb-finder", level, false);
     } else {
       playClickSafe();
       spawnParticles(cell.id);
@@ -128,16 +129,16 @@ const BombFinder = () => {
       if (newSafe >= config.safeTarget) {
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("bomb-finder", level);
+        completeLevel("bomb-finder", level, true);
         setGameState("won");
         playLevelWin();
       }
     }
   };
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("bomb-finder", level);
+    if (!ok) return;
     const cfg = getLevelConfig(level);
     setGrid(generateGrid(cfg.bombs));
     setGameState("playing");
@@ -146,7 +147,7 @@ const BombFinder = () => {
     setParticles([]);
     setExplosions([]);
     setPointPopups([]);
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

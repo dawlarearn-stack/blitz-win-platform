@@ -43,7 +43,7 @@ function pickRandom<T>(arr: T[], exclude?: T): T {
 }
 
 const ColorMatch = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["color-match"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
@@ -70,14 +70,15 @@ const ColorMatch = () => {
     setTimeLeft(getTimePerRound(level));
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("color-match", level);
+    if (!ok) return;
     setGameState("playing");
     setRound(0);
     setCorrect(0);
     setEarnedPoints(0);
     generateRound();
-  }, [generateRound]);
+  }, [generateRound, startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
@@ -90,6 +91,7 @@ const ColorMatch = () => {
             setFeedback(null);
             playGameOver();
             setGameState("lost");
+            completeLevel("color-match", level, false);
           }, 500);
           clearInterval(timerRef.current);
           return 0;
@@ -115,8 +117,7 @@ const ColorMatch = () => {
           playLevelWin();
           const pts = getPointsForLevel(level);
           setEarnedPoints(pts);
-          addPoints(pts);
-          updateProgress("color-match", level);
+          completeLevel("color-match", level, true);
           setGameState("won");
         } else {
           setRound((r) => r + 1);
@@ -130,6 +131,7 @@ const ColorMatch = () => {
         setFeedback(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("color-match", level, false);
       }, 500);
     }
   };
