@@ -117,8 +117,7 @@ const ColorMatch = () => {
           playLevelWin();
           const pts = getPointsForLevel(level);
           setEarnedPoints(pts);
-          addPoints(pts);
-          updateProgress("color-match", level);
+          completeLevel("color-match", level, true);
           setGameState("won");
         } else {
           setRound((r) => r + 1);
