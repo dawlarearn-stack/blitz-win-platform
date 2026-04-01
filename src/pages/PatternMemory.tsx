@@ -66,7 +66,7 @@ const PatternMemory = () => {
       }
     };
     setTimeout(showNext, 500);
-  }, [seqLength, totalCells, spendEnergy]);
+  }, [seqLength, totalCells, startLevel, level]);
 
   useEffect(() => () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); }, []);
 
