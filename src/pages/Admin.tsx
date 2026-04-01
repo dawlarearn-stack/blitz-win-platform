@@ -94,7 +94,8 @@ const Admin = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Stats
-  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0 });
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0 });
+  const [suspiciousLogs, setSuspiciousLogs] = useState<SuspiciousLog[]>([]);
 
   // Config
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
