@@ -83,8 +83,7 @@ const PatternMemory = () => {
         playLevelWin();
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("pattern-memory", level);
+        completeLevel("pattern-memory", level, true);
         setGameState("won");
       }
     } else {
