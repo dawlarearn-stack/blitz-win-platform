@@ -139,8 +139,8 @@ const Shop = () => {
             </div>
           </Section>
 
-          {/* WavePay */}
-          <Section title="WavePay (MMK)" icon={<Smartphone className="w-4 h-4 text-accent" />}>
+          {/* MMK Purchases */}
+          <Section title="Buy Energy (MMK)" icon={<Banknote className="w-4 h-4 text-accent" />}>
             <div className="grid grid-cols-2 gap-3">
               {energyPacks.map((pack) => (
                 <PackCard
