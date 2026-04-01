@@ -134,8 +134,9 @@ const MemoryMatch = () => {
     [cards, selected, gameState, moves, level, maxMoves, completeLevel]
   );
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("memory-match", level);
+    if (!ok) return;
     setCards(generateCards(level));
     setMoves(0);
     setSelected([]);
@@ -144,7 +145,7 @@ const MemoryMatch = () => {
     setSparkleIds([]);
     setEarnedPoints(0);
     setGameState("playing");
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };

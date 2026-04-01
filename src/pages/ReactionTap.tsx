@@ -168,15 +168,15 @@ const ReactionTap = () => {
       const bonus = misses === 0 ? Math.floor(base * 0.5) : 0;
       const pts = base + bonus;
       setEarnedPoints(pts);
-      addPoints(pts);
-      updateProgress("reaction-tap", level);
+      completeLevel("reaction-tap", level, true);
       setGameState("won");
     } else if (timeLeft === 0) {
       cleanup();
       playGameOver();
       setGameState("lost");
+      completeLevel("reaction-tap", level, false);
     }
-  }, [hits, timeLeft, gameState, hitsNeeded, level, cleanup, addPoints, updateProgress, misses]);
+  }, [hits, timeLeft, gameState, hitsNeeded, level, cleanup, completeLevel, misses]);
 
   const addEffect = (x: number, y: number, type: "hit" | "miss") => {
     const id = Date.now() + Math.random();

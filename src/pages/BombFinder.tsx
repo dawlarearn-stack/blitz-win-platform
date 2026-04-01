@@ -136,8 +136,9 @@ const BombFinder = () => {
     }
   };
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("bomb-finder", level);
+    if (!ok) return;
     const cfg = getLevelConfig(level);
     setGrid(generateGrid(cfg.bombs));
     setGameState("playing");
@@ -146,7 +147,7 @@ const BombFinder = () => {
     setParticles([]);
     setExplosions([]);
     setPointPopups([]);
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = () => { setGameState("idle"); };
