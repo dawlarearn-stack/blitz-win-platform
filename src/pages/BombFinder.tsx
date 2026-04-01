@@ -37,13 +37,13 @@ function getLevelConfig(level: number): { bombs: number; safeTarget: number } {
 }
 
 function getPointsForLevel(level: number): number {
-  if (level <= 10) return 10;
-  if (level <= 20) return 15;
-  if (level <= 40) return 20;
-  if (level <= 60) return 25;
-  if (level <= 80) return 30;
-  if (level <= 90) return 45;
-  return 65;
+  if (level <= 10) return 35;
+  if (level <= 20) return 55;
+  if (level <= 40) return 75;
+  if (level <= 60) return 95;
+  if (level <= 80) return 115;
+  if (level <= 90) return 150;
+  return 175;
 }
 
 type Cell = { id: number; isBomb: boolean; revealed: boolean };

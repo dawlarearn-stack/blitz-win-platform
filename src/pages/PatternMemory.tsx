@@ -16,13 +16,13 @@ function getGridSize(level: number): number {
 }
 
 function getPointsForLevel(level: number): number {
-  if (level <= 9) return 10;
-  if (level <= 19) return 15;
-  if (level <= 39) return 20;
-  if (level <= 59) return 25;
-  if (level <= 79) return 30;
-  if (level <= 89) return 40;
-  return 50;
+  if (level <= 9) return 35;
+  if (level <= 19) return 55;
+  if (level <= 39) return 75;
+  if (level <= 59) return 95;
+  if (level <= 79) return 115;
+  if (level <= 89) return 150;
+  return 175;
 }
 
 const PatternMemory = () => {
