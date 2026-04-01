@@ -128,6 +128,7 @@ const LuckyBox = () => {
         playGameOver();
         setBoxes((prev) => prev.map((b) => ({ ...b, revealed: true })));
         setGameState("lost");
+        completeLevel("lucky-box", level, false);
       }, 600);
     } else if (content === "reward") {
       playClickSafe();
