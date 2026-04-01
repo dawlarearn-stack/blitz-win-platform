@@ -32,14 +32,15 @@ const DiceRoll = () => {
   const [lastResult, setLastResult] = useState<"correct" | "wrong" | null>(null);
   const winsNeeded = getWinsNeeded(level);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("dice-roll", level);
+    if (!ok) return;
     setWins(0);
     setLastResult(null);
     setGameState("playing");
     setEarnedPoints(0);
     setDice([1, 1]);
-  }, [spendEnergy]);
+  }, [startLevel, level]);
 
   const handleGuess = useCallback((guess: "high" | "low" | "seven") => {
     if (gameState !== "playing") return;
