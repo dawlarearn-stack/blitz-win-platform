@@ -68,7 +68,7 @@ interface Particle {
 }
 
 const LuckyBox = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["lucky-box"];
   const [level, setLevel] = useState(progress?.currentLevel || 0);
   const [boxes, setBoxes] = useState<BoxState[]>(() => generateBoxes(level));
