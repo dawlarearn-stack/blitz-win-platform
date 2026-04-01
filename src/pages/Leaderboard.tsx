@@ -42,9 +42,13 @@ const Leaderboard = () => {
     const fetchTopPlayers = async () => {
       try {
         // Get top 10 by points from user_game_state
+        // Only show real Telegram users (numeric IDs) with points > 0
         const { data: gameStates, error } = await supabase
           .from("user_game_state")
           .select("telegram_id, points, games_played")
+          .gt("points", 0)
+          .not("telegram_id", "like", "guest_%")
+          .not("telegram_id", "like", "dev-%")
           .order("points", { ascending: false })
           .limit(10);
 
