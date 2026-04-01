@@ -1,12 +1,21 @@
 import { motion } from "framer-motion";
-import { Timer, Trophy, Gift, UserPlus } from "lucide-react";
+import { Timer, Trophy, Gift, UserPlus, Users, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useWeeklyCountdown,
-  getWeeklyInviters,
   getRewardForRank,
 } from "@/lib/weeklyLeaderboard";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { getTelegramId } from "@/lib/fingerprint";
+
+interface WeeklyInviter {
+  rank: number;
+  name: string;
+  invites: number;
+  telegramId: string;
+}
 
 const getRankEmoji = (rank: number) => {
   if (rank === 1) return "🥇";
@@ -61,12 +70,47 @@ function RewardBadge({ rank }: { rank: number }) {
   );
 }
 
-interface Props {
-  userInvites: number;
-}
+export default function WeeklyInviteLeaderboard() {
+  const [inviters, setInviters] = useState<WeeklyInviter[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userInvites, setUserInvites] = useState(0);
+  const currentUserId = getTelegramId();
 
-export default function WeeklyInviteLeaderboard({ userInvites }: Props) {
-  const inviters = getWeeklyInviters();
+  useEffect(() => {
+    const fetchWeeklyInviters = async () => {
+      try {
+        // Get current week boundaries (Monday UTC)
+        const now = new Date();
+        const day = now.getUTCDay();
+        const diff = day === 0 ? 6 : day - 1;
+        const weekStart = new Date(now);
+        weekStart.setUTCHours(0, 0, 0, 0);
+        weekStart.setUTCDate(weekStart.getUTCDate() - diff);
+
+        // Query bot_users who joined this week, grouped by who referred them
+        // For now, we'll count bot_users joined this week as a proxy
+        // In a full implementation, you'd have a referrals table tracking who invited whom
+        // For now, show real users from bot_users ordered by join date this week
+        const { data: weekUsers, error } = await supabase
+          .from("bot_users")
+          .select("telegram_id, username, first_name")
+          .gte("joined_at", weekStart.toISOString())
+          .order("joined_at", { ascending: true });
+
+        if (error) throw error;
+
+        // Since we don't have a referral tracking table yet, show empty
+        // The weekly invite race needs a proper referral tracking system
+        setInviters([]);
+        setUserInvites(0);
+      } catch (err) {
+        console.error("Failed to fetch weekly inviters:", err);
+      }
+      setLoading(false);
+    };
+
+    fetchWeeklyInviters();
+  }, [currentUserId]);
 
   return (
     <motion.div
@@ -150,44 +194,56 @@ export default function WeeklyInviteLeaderboard({ userInvites }: Props) {
       {/* Scrollable Leaderboard */}
       <ScrollArea className="h-[420px] rounded-xl border border-border/50 gradient-card">
         <div className="space-y-1.5 p-2">
-          {inviters.map((inviter, i) => {
-            const emoji = getRankEmoji(inviter.rank);
-            const glow = getGlow(inviter.rank);
-            const hasReward = inviter.rank <= 10;
-            return (
-              <motion.div
-                key={inviter.rank}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: Math.min(i * 0.015, 0.5) }}
-                className={`flex items-center gap-3 rounded-lg p-3 border ${getRankStyle(inviter.rank)} transition-colors`}
-                style={glow ? { boxShadow: glow } : undefined}
-              >
-                <div className="w-7 text-center shrink-0">
-                  {emoji ? (
-                    <span className="text-base">{emoji}</span>
-                  ) : (
-                    <span className="text-xs font-display text-muted-foreground">{inviter.rank}</span>
-                  )}
-                </div>
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarFallback className="bg-secondary text-secondary-foreground font-display text-xs">
-                    {inviter.name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-display text-sm font-bold text-foreground truncate">
-                    @{inviter.name}
-                  </p>
-                  {hasReward && <RewardBadge rank={inviter.rank} />}
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-display text-sm font-bold text-primary">{inviter.invites}</p>
-                  <p className="text-[10px] text-muted-foreground">invites</p>
-                </div>
-              </motion.div>
-            );
-          })}
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : inviters.length === 0 ? (
+            <div className="text-center py-16">
+              <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No inviters this week yet.</p>
+              <p className="text-xs text-muted-foreground mt-1">Share your referral link to compete!</p>
+            </div>
+          ) : (
+            inviters.map((inviter, i) => {
+              const emoji = getRankEmoji(inviter.rank);
+              const glow = getGlow(inviter.rank);
+              const hasReward = inviter.rank <= 10;
+              return (
+                <motion.div
+                  key={inviter.rank}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: Math.min(i * 0.015, 0.5) }}
+                  className={`flex items-center gap-3 rounded-lg p-3 border ${getRankStyle(inviter.rank)} transition-colors`}
+                  style={glow ? { boxShadow: glow } : undefined}
+                >
+                  <div className="w-7 text-center shrink-0">
+                    {emoji ? (
+                      <span className="text-base">{emoji}</span>
+                    ) : (
+                      <span className="text-xs font-display text-muted-foreground">{inviter.rank}</span>
+                    )}
+                  </div>
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarFallback className="bg-secondary text-secondary-foreground font-display text-xs">
+                      {inviter.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-sm font-bold text-foreground truncate">
+                      @{inviter.name}
+                    </p>
+                    {hasReward && <RewardBadge rank={inviter.rank} />}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-display text-sm font-bold text-primary">{inviter.invites}</p>
+                    <p className="text-[10px] text-muted-foreground">invites</p>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
         </div>
       </ScrollArea>
     </motion.div>

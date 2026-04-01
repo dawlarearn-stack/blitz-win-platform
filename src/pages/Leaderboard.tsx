@@ -1,23 +1,18 @@
 import { motion } from "framer-motion";
-import { Trophy, Medal, Star, Users } from "lucide-react";
+import { Trophy, Medal, Star, Users, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import WeeklyInviteLeaderboard from "@/components/WeeklyInviteLeaderboard";
 import { checkAndDistributeRewards } from "@/lib/weeklyLeaderboard";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const MOCK_PLAYERS = [
-  { rank: 1, name: "CyberKing", points: 28500, gamesPlayed: 342 },
-  { rank: 2, name: "NeonQueen", points: 24200, gamesPlayed: 298 },
-  { rank: 3, name: "PixelNinja", points: 21800, gamesPlayed: 276 },
-  { rank: 4, name: "GlowMaster", points: 19400, gamesPlayed: 251 },
-  { rank: 5, name: "ByteRunner", points: 17100, gamesPlayed: 230 },
-  { rank: 6, name: "StarCoder", points: 15600, gamesPlayed: 210 },
-  { rank: 7, name: "DarkWave", points: 13900, gamesPlayed: 195 },
-  { rank: 8, name: "FlashHero", points: 12300, gamesPlayed: 178 },
-  { rank: 9, name: "VoidWalker", points: 10800, gamesPlayed: 162 },
-  { rank: 10, name: "LightPulse", points: 9500, gamesPlayed: 148 },
-];
+interface LeaderboardPlayer {
+  rank: number;
+  name: string;
+  points: number;
+  gamesPlayed: number;
+}
 
 const getRankIcon = (rank: number) => {
   if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-400" />;
@@ -33,17 +28,61 @@ const getRankStyle = (rank: number) => {
   return "border-border/50";
 };
 
-
-
 const Leaderboard = () => {
   const { data, addPoints } = useGameStore();
-  const userInvites = data.referrals.filter(
-    (r) => r.gamesPlayed >= 50 && (Date.now() - r.joinedAt) / (1000 * 60 * 60 * 24) >= 3
-  ).length;
+  const [topPlayers, setTopPlayers] = useState<LeaderboardPlayer[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
 
   useEffect(() => {
     checkAndDistributeRewards(addPoints);
   }, [addPoints]);
+
+  // Fetch real top 10 players from database
+  useEffect(() => {
+    const fetchTopPlayers = async () => {
+      try {
+        // Get top 10 by points from user_game_state
+        const { data: gameStates, error } = await supabase
+          .from("user_game_state")
+          .select("telegram_id, points, games_played")
+          .order("points", { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+
+        if (!gameStates || gameStates.length === 0) {
+          setTopPlayers([]);
+          setLoadingPlayers(false);
+          return;
+        }
+
+        // Get usernames from bot_users
+        const telegramIds = gameStates.map((s) => s.telegram_id);
+        const { data: botUsers } = await supabase
+          .from("bot_users")
+          .select("telegram_id, username, first_name")
+          .in("telegram_id", telegramIds);
+
+        const userMap = new Map(
+          (botUsers || []).map((u) => [u.telegram_id, u.username || u.first_name || `User-${u.telegram_id.slice(-4)}`])
+        );
+
+        setTopPlayers(
+          gameStates.map((s, i) => ({
+            rank: i + 1,
+            name: userMap.get(s.telegram_id) || `Player-${s.telegram_id.slice(-4)}`,
+            points: s.points,
+            gamesPlayed: s.games_played,
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to fetch leaderboard:", err);
+      }
+      setLoadingPlayers(false);
+    };
+
+    fetchTopPlayers();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,33 +128,44 @@ const Leaderboard = () => {
             <span className="font-display text-xs font-bold text-muted-foreground uppercase tracking-wider">Top 10 Players</span>
           </div>
 
-          <div className="space-y-2 mb-10">
-            {MOCK_PLAYERS.map((player, i) => (
-              <motion.div
-                key={player.rank}
-                initial={{ opacity: 0, x: -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className={`flex items-center gap-3 gradient-card rounded-xl p-3.5 border ${getRankStyle(player.rank)}`}
-              >
-                <div className="w-8 flex items-center justify-center">
-                  {getRankIcon(player.rank)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-display text-sm font-bold text-foreground truncate">{player.name}</p>
-                  <p className="text-xs text-muted-foreground">{player.gamesPlayed} games played</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-display text-sm font-bold text-primary">{player.points.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">pts</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {loadingPlayers ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : topPlayers.length === 0 ? (
+            <div className="text-center py-12 gradient-card rounded-xl border border-border/50">
+              <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No players yet. Be the first!</p>
+            </div>
+          ) : (
+            <div className="space-y-2 mb-10">
+              {topPlayers.map((player, i) => (
+                <motion.div
+                  key={player.rank}
+                  initial={{ opacity: 0, x: -15 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className={`flex items-center gap-3 gradient-card rounded-xl p-3.5 border ${getRankStyle(player.rank)}`}
+                >
+                  <div className="w-8 flex items-center justify-center">
+                    {getRankIcon(player.rank)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-sm font-bold text-foreground truncate">{player.name}</p>
+                    <p className="text-xs text-muted-foreground">{player.gamesPlayed} games played</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-display text-sm font-bold text-primary">{player.points.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">pts</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
           {/* Weekly Invite Race */}
           <div className="mt-10">
-            <WeeklyInviteLeaderboard userInvites={userInvites} />
+            <WeeklyInviteLeaderboard />
           </div>
         </div>
       </div>
