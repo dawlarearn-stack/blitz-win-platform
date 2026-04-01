@@ -9,7 +9,7 @@ interface PaymentRecord {
   id: string;
   energy_amount: number;
   price_mmk: string;
-  payment_method: "kpay" | "wavepay";
+  payment_method: "kpay" | "wavepay" | "binance";
   status: "pending" | "approved" | "rejected";
   created_at: string;
   receipt_last4: string;

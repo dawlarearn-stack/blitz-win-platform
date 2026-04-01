@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History } from "lucide-react";
 import MMKPaymentFlow from "@/components/MMKPaymentFlow";
+import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
@@ -39,16 +40,17 @@ const conversions: ConversionOption[] = [
   { energy: 500, pointsCost: 24000 },
 ];
 
-type ModalType = "usd" | "wavepay" | "convert" | null;
+type ModalType = "convert" | null;
 
 const Shop = () => {
   const { data, addEnergy, spendPoints } = useGameStore();
   const [modal, setModal] = useState<ModalType>(null);
-  const [selectedPack, setSelectedPack] = useState<EnergyPack | null>(null);
   const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
   const [mmkFlowPack, setMmkFlowPack] = useState<EnergyPack | null>(null);
+  const [usdFlowOpen, setUsdFlowOpen] = useState(false);
+  const [usdFlowPack, setUsdFlowPack] = useState<EnergyPack | null>(null);
 
   const openBuy = (pack: EnergyPack, type: "usd" | "wavepay") => {
     if (type === "wavepay") {
@@ -56,15 +58,15 @@ const Shop = () => {
       setMmkFlowOpen(true);
       return;
     }
-    setSelectedPack(pack);
-    setSelectedConversion(null);
-    setResultMsg(null);
-    setModal(type);
+    if (type === "usd") {
+      setUsdFlowPack(pack);
+      setUsdFlowOpen(true);
+      return;
+    }
   };
 
   const openConvert = (conv: ConversionOption) => {
     setSelectedConversion(conv);
-    setSelectedPack(null);
     setResultMsg(null);
     setModal("convert");
   };
@@ -80,12 +82,6 @@ const Shop = () => {
     }
   };
 
-  const handleBuy = () => {
-    if (!selectedPack) return;
-    // Simulated purchase — in production this calls payment API
-    addEnergy(selectedPack.energy);
-    setResultMsg(`✅ +${selectedPack.energy} Energy ရရှိပါပြီ!`);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -156,11 +152,6 @@ const Shop = () => {
             </div>
           </Section>
 
-          {/* Payment History */}
-          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
-            <PaymentHistory />
-          </Section>
-
           {/* Points → Energy */}
           <Section title="Points → Energy" icon={<ArrowRightLeft className="w-4 h-4 text-primary" />}>
             <div className="grid grid-cols-2 gap-3">
@@ -181,6 +172,11 @@ const Shop = () => {
               ))}
             </div>
           </Section>
+
+          {/* Payment History - at the bottom */}
+          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
+            <PaymentHistory />
+          </Section>
         </div>
       </div>
 
@@ -192,33 +188,28 @@ const Shop = () => {
         onComplete={() => setMmkFlowOpen(false)}
       />
 
+      {/* USD Payment Flow */}
+      <USDPaymentFlow
+        open={usdFlowOpen}
+        onOpenChange={setUsdFlowOpen}
+        pack={usdFlowPack}
+        onComplete={() => setUsdFlowOpen(false)}
+      />
+
       {/* Confirmation Modal (USD & Points) */}
       <Dialog open={modal !== null} onOpenChange={(o) => !o && setModal(null)}>
         <DialogContent className="gradient-card border-border/50 max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">
-              {resultMsg
-                ? "Result"
-                : modal === "convert"
-                ? "Points → Energy ပြောင်းမလား?"
-                : modal === "wavepay"
-                ? "WavePay ဖြင့် ဝယ်ယူမလား?"
-                : "USD ဖြင့် ဝယ်ယူမလား?"}
+              {resultMsg ? "Result" : "Points → Energy ပြောင်းမလား?"}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm">
               {resultMsg ? (
                 <span className="text-base">{resultMsg}</span>
-              ) : modal === "convert" && selectedConversion ? (
+              ) : selectedConversion ? (
                 <>
                   <span className="text-primary font-bold">{selectedConversion.pointsCost.toLocaleString()} Points</span> သုံးပြီး{" "}
                   <span className="text-accent font-bold">+{selectedConversion.energy} Energy</span> ရယူမလား?
-                </>
-              ) : selectedPack ? (
-                <>
-                  <span className="text-primary font-bold">
-                    {modal === "wavepay" ? selectedPack.priceMMK : selectedPack.priceUSD}
-                  </span>{" "}
-                  ပေးပြီး <span className="text-accent font-bold">+{selectedPack.energy} Energy</span> ဝယ်ယူမလား?
                 </>
               ) : null}
             </DialogDescription>
@@ -235,7 +226,7 @@ const Shop = () => {
                 </Button>
                 <Button
                   className="flex-1 gradient-primary text-primary-foreground font-display"
-                  onClick={modal === "convert" ? handleConvert : handleBuy}
+                  onClick={handleConvert}
                 >
                   Confirm
                 </Button>
