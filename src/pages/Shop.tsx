@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Smartphone } from "lucide-react";
+import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote } from "lucide-react";
+import MMKPaymentFlow from "@/components/MMKPaymentFlow";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import {
