@@ -221,6 +221,7 @@ const ReactionTap = () => {
   };
 
   const nextLevel = () => {
+    trackNextLevel();
     setLevel((l) => Math.min(l + 1, 100));
     setGameState("idle");
   };

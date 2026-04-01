@@ -113,7 +113,7 @@ const WordScramble = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const nextLevel = () => { trackNextLevel(); setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
