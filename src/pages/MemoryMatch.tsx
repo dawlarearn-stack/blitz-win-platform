@@ -102,8 +102,7 @@ const MemoryMatch = () => {
                 const bonus = Math.max(0, Math.floor(movesLeft * 0.5));
                 const pts = basePts + bonus;
                 setEarnedPoints(pts);
-                addPoints(pts);
-                updateProgress("memory-match", level);
+                completeLevel("memory-match", level, true);
                 setGameState("won");
               }
               return updated;
