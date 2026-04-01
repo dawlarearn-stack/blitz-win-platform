@@ -36,7 +36,7 @@ const Dashboard = () => {
 
   // Use demo referrals if no real ones exist
   const referrals = data.referrals.length > 0 ? data.referrals : DEMO_REFERRALS;
-  const referralLink = `https://t.me/PGRGameBot?start=${data.referralCode}`;
+  const referralLink = `https://t.me/PGRmm_bot?start=${data.referralCode}`;
 
   const handleCopy = async () => {
     try {
