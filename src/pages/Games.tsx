@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bomb, Brain, Zap, Gift, Palette, Keyboard, Grid3X3, Hash, Dice1, Rat } from "lucide-react";
+import { Bomb, Brain, Zap, Gift, Palette, Keyboard, Grid3X3, Hash, Dice1, Rat, Coins } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useGameStore } from "@/lib/gameStore";
 
@@ -54,9 +54,14 @@ const Games = () => {
                         <h3 className="font-display text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                           {game.name}
                         </h3>
-                        <span className="text-xs font-display text-muted-foreground ml-2 shrink-0">
-                          Lv.{currentLevel}
-                        </span>
+                        <div className="flex items-center gap-2 ml-2 shrink-0">
+                          <span className="flex items-center gap-0.5 text-xs text-accent">
+                            <Coins className="w-3 h-3" />10,000
+                          </span>
+                          <span className="text-xs font-display text-muted-foreground">
+                            Lv.{currentLevel}
+                          </span>
+                        </div>
                       </div>
                       <p className="text-muted-foreground text-xs mb-2">{game.desc}</p>
                       <div className="w-full h-1.5 rounded-full bg-secondary overflow-hidden">
