@@ -100,8 +100,9 @@ const LuckyBox = () => {
     setTimeout(() => setParticles((p) => p.filter((pp) => !ps.find((np) => np.id === pp.id))), 700);
   };
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("lucky-box", level);
+    if (!ok) return;
     setBoxes(generateBoxes(level));
     setPicksLeft(PICKS_PER_LEVEL);
     setGameState("playing");
@@ -109,7 +110,7 @@ const LuckyBox = () => {
     setTotalRoundPoints(0);
     setParticles([]);
     setLastRevealedIdx(null);
-  }, [level, spendEnergy]);
+  }, [level, startLevel]);
 
   const handleOpen = useCallback((index: number) => {
     if (gameState !== "playing" || boxes[index].revealed || picksLeft <= 0) return;
