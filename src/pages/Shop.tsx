@@ -209,28 +209,15 @@ const Shop = () => {
         <DialogContent className="gradient-card border-border/50 max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-foreground">
-              {resultMsg
-                ? "Result"
-                : modal === "convert"
-                ? "Points → Energy ပြောင်းမလား?"
-                : modal === "wavepay"
-                ? "WavePay ဖြင့် ဝယ်ယူမလား?"
-                : "USD ဖြင့် ဝယ်ယူမလား?"}
+              {resultMsg ? "Result" : "Points → Energy ပြောင်းမလား?"}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm">
               {resultMsg ? (
                 <span className="text-base">{resultMsg}</span>
-              ) : modal === "convert" && selectedConversion ? (
+              ) : selectedConversion ? (
                 <>
                   <span className="text-primary font-bold">{selectedConversion.pointsCost.toLocaleString()} Points</span> သုံးပြီး{" "}
                   <span className="text-accent font-bold">+{selectedConversion.energy} Energy</span> ရယူမလား?
-                </>
-              ) : selectedPack ? (
-                <>
-                  <span className="text-primary font-bold">
-                    {modal === "wavepay" ? selectedPack.priceMMK : selectedPack.priceUSD}
-                  </span>{" "}
-                  ပေးပြီး <span className="text-accent font-bold">+{selectedPack.energy} Energy</span> ဝယ်ယူမလား?
                 </>
               ) : null}
             </DialogDescription>
@@ -247,9 +234,10 @@ const Shop = () => {
                 </Button>
                 <Button
                   className="flex-1 gradient-primary text-primary-foreground font-display"
-                  onClick={modal === "convert" ? handleConvert : handleBuy}
+                  onClick={handleConvert}
                 >
                   Confirm
+                </Button>
                 </Button>
               </>
             )}
