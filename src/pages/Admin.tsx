@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Shield, CheckCircle, XCircle, Clock, RefreshCw, Eye, LogIn } from "lucide-react";
+import { Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn, Wallet, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const ADMIN_KEY_STORAGE = "pgr_admin_key";
 
@@ -33,24 +32,46 @@ interface PaymentRequest {
   created_at: string;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  telegram_id: string;
+  withdrawal_method: "binance_id" | "bep20" | "kbz_pay" | "wave_pay";
+  amount_points: number;
+  amount_usd: string | null;
+  amount_mmk: string | null;
+  currency: string;
+  binance_account_name: string | null;
+  binance_uid: string | null;
+  bep20_address: string | null;
+  account_name: string | null;
+  phone_number: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}
+
 type StatusFilter = "pending" | "approved" | "rejected";
+type TabType = "payments" | "withdrawals";
 
 const Admin = () => {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
   const [authenticated, setAuthenticated] = useState(false);
   const [keyInput, setKeyInput] = useState("");
+  const [tab, setTab] = useState<TabType>("payments");
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<StatusFilter>("pending");
   const [selectedRequest, setSelectedRequest] = useState<PaymentRequest | null>(null);
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRequest | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchRequests = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!adminKey) return;
     setLoading(true);
     try {
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const url = `${baseUrl}/functions/v1/admin-payments?status=${filter}`;
+      const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
+      const url = `${baseUrl}/functions/v1/${endpoint}?status=${filter}`;
       const resp = await fetch(url, {
         headers: {
           "x-admin-key": adminKey,
@@ -67,7 +88,11 @@ const Admin = () => {
         }
         throw new Error(result.error);
       }
-      setRequests(result.data || []);
+      if (tab === "payments") {
+        setRequests(result.data || []);
+      } else {
+        setWithdrawals(result.data || []);
+      }
       setAuthenticated(true);
     } catch (err: any) {
       console.error(err);
@@ -75,13 +100,11 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  }, [adminKey, filter]);
+  }, [adminKey, filter, tab]);
 
   useEffect(() => {
-    if (adminKey) {
-      fetchRequests();
-    }
-  }, [adminKey, filter, fetchRequests]);
+    if (adminKey) fetchData();
+  }, [adminKey, filter, tab, fetchData]);
 
   const handleLogin = () => {
     if (!keyInput.trim()) return;
@@ -91,12 +114,11 @@ const Admin = () => {
     setKeyInput("");
   };
 
-  const handleAction = async (id: string, action: "approved" | "rejected") => {
+  const handlePaymentAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const url = `${baseUrl}/functions/v1/admin-payments`;
-      const resp = await fetch(url, {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-payments`, {
         method: "POST",
         headers: {
           "x-admin-key": adminKey,
@@ -107,16 +129,48 @@ const Admin = () => {
       });
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
-
       toast.success(action === "approved" ? "✅ Approved!" : "❌ Rejected!");
       setSelectedRequest(null);
-      fetchRequests();
+      fetchData();
     } catch (err: any) {
       console.error(err);
       toast.error("Action failed");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleWithdrawalAction = async (id: string, action: "approved" | "rejected") => {
+    setActionLoading(true);
+    try {
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-withdrawals`, {
+        method: "POST",
+        headers: {
+          "x-admin-key": adminKey,
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, action }),
+      });
+      const result = await resp.json();
+      if (result.error) throw new Error(result.error);
+      toast.success(action === "approved" ? "✅ Approved!" : "❌ Rejected!");
+      setSelectedWithdrawal(null);
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Action failed");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const methodLabels: Record<string, string> = {
+    binance_id: "Binance ID",
+    bep20: "BEP20 (BSC)",
+    kbz_pay: "KBZ Pay",
+    wave_pay: "WavePay",
   };
 
   // Login screen
@@ -152,6 +206,8 @@ const Admin = () => {
     );
   }
 
+  const currentList = tab === "payments" ? requests : withdrawals;
+
   return (
     <div className="min-h-screen bg-background">
       <div className="pt-6 pb-20 px-4">
@@ -160,18 +216,38 @@ const Admin = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-6"
+            className="flex items-center justify-between mb-4"
           >
             <div className="flex items-center gap-2">
               <Shield className="w-6 h-6 text-primary" />
-              <h1 className="font-display text-xl font-bold text-foreground">Admin Dashboard</h1>
+              <h1 className="font-display text-xl font-bold text-foreground">Admin</h1>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchRequests} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </motion.div>
 
-          {/* Filter tabs */}
+          {/* Tab switcher */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={tab === "payments" ? "default" : "outline"}
+              size="sm"
+              className={`font-display text-xs ${tab === "payments" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => { setTab("payments"); setFilter("pending"); }}
+            >
+              <Zap className="w-3 h-3" /> Energy Purchases
+            </Button>
+            <Button
+              variant={tab === "withdrawals" ? "default" : "outline"}
+              size="sm"
+              className={`font-display text-xs ${tab === "withdrawals" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => { setTab("withdrawals"); setFilter("pending"); }}
+            >
+              <Wallet className="w-3 h-3" /> Withdrawals
+            </Button>
+          </div>
+
+          {/* Status filter */}
           <div className="flex gap-2 mb-4">
             {(["pending", "approved", "rejected"] as StatusFilter[]).map((s) => (
               <Button
@@ -185,24 +261,24 @@ const Admin = () => {
                 {s === "approved" && <CheckCircle className="w-3 h-3" />}
                 {s === "rejected" && <XCircle className="w-3 h-3" />}
                 {s.charAt(0).toUpperCase() + s.slice(1)}
-                {s === "pending" && requests.length > 0 && (
+                {s === "pending" && currentList.length > 0 && (
                   <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">
-                    {requests.length}
+                    {currentList.length}
                   </Badge>
                 )}
               </Button>
             ))}
           </div>
 
-          {/* Requests list */}
-          <ScrollArea className="h-[calc(100vh-200px)]">
+          {/* List */}
+          <ScrollArea className="h-[calc(100vh-260px)]">
             {loading ? (
               <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
-            ) : requests.length === 0 ? (
+            ) : currentList.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground text-sm font-display">
                 {filter} requests မရှိပါ
               </div>
-            ) : (
+            ) : tab === "payments" ? (
               <div className="space-y-3">
                 {requests.map((req) => (
                   <motion.div
@@ -237,12 +313,49 @@ const Admin = () => {
                   </motion.div>
                 ))}
               </div>
+            ) : (
+              <div className="space-y-3">
+                {withdrawals.map((w) => (
+                  <motion.div
+                    key={w.id}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="gradient-card rounded-xl p-4 border border-border/50 hover:border-accent/30 transition-all cursor-pointer"
+                    onClick={() => setSelectedWithdrawal(w)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-display ${
+                            w.withdrawal_method.includes("binance") || w.withdrawal_method === "bep20"
+                              ? "border-yellow-500/50 text-yellow-500"
+                              : "border-primary/50 text-primary"
+                          }`}
+                        >
+                          {methodLabels[w.withdrawal_method] || w.withdrawal_method}
+                        </Badge>
+                        <span className="font-display text-sm font-bold text-foreground">
+                          {w.currency === "USD" ? `$${w.amount_usd}` : w.amount_mmk}
+                        </span>
+                      </div>
+                      <span className="text-accent font-display text-xs font-bold">
+                        {w.amount_points.toLocaleString()} pts
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>TG: {w.telegram_id}</span>
+                      <span>{new Date(w.created_at).toLocaleString()}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             )}
           </ScrollArea>
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {/* Payment Detail Modal */}
       <Dialog open={selectedRequest !== null} onOpenChange={(o) => !o && setSelectedRequest(null)}>
         {selectedRequest && (
           <DialogContent className="gradient-card border-border/50 max-w-sm">
@@ -252,7 +365,6 @@ const Admin = () => {
                 ID: {selectedRequest.id.slice(0, 8)}...
               </DialogDescription>
             </DialogHeader>
-
             <div className="space-y-3">
               <InfoRow label="Telegram ID" value={selectedRequest.telegram_id || "N/A"} />
               <InfoRow label="Energy" value={`+${selectedRequest.energy_amount.toLocaleString()}`} />
@@ -263,47 +375,81 @@ const Admin = () => {
               <InfoRow label="Receipt Last 4" value={selectedRequest.receipt_last4} />
               <InfoRow label="Created" value={new Date(selectedRequest.created_at).toLocaleString()} />
               <InfoRow label="Expires" value={new Date(selectedRequest.expires_at).toLocaleString()} />
-
               {selectedRequest.screenshot_url && (
                 <div>
                   <p className="text-muted-foreground text-[10px] font-display mb-1">Screenshot</p>
                   <a href={selectedRequest.screenshot_url} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={selectedRequest.screenshot_url}
-                      alt="Payment screenshot"
-                      className="w-full rounded-lg border border-border/50 max-h-48 object-contain"
-                    />
+                    <img src={selectedRequest.screenshot_url} alt="Payment screenshot" className="w-full rounded-lg border border-border/50 max-h-48 object-contain" />
                   </a>
                 </div>
               )}
             </div>
-
             {selectedRequest.status === "pending" && (
               <div className="flex gap-3 mt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10"
-                  onClick={() => handleAction(selectedRequest.id, "rejected")}
-                  disabled={actionLoading}
-                >
+                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handlePaymentAction(selectedRequest.id, "rejected")} disabled={actionLoading}>
                   <XCircle className="w-4 h-4" /> Reject
                 </Button>
-                <Button
-                  className="flex-1 gradient-primary text-primary-foreground font-display"
-                  onClick={() => handleAction(selectedRequest.id, "approved")}
-                  disabled={actionLoading}
-                >
+                <Button className="flex-1 gradient-primary text-primary-foreground font-display" onClick={() => handlePaymentAction(selectedRequest.id, "approved")} disabled={actionLoading}>
                   <CheckCircle className="w-4 h-4" /> Approve
                 </Button>
               </div>
             )}
-
             {selectedRequest.status !== "pending" && (
-              <Badge
-                variant={selectedRequest.status === "approved" ? "default" : "destructive"}
-                className="w-full justify-center py-2 font-display"
-              >
+              <Badge variant={selectedRequest.status === "approved" ? "default" : "destructive"} className="w-full justify-center py-2 font-display">
                 {selectedRequest.status === "approved" ? "✅ Approved" : "❌ Rejected"}
+              </Badge>
+            )}
+          </DialogContent>
+        )}
+      </Dialog>
+
+      {/* Withdrawal Detail Modal */}
+      <Dialog open={selectedWithdrawal !== null} onOpenChange={(o) => !o && setSelectedWithdrawal(null)}>
+        {selectedWithdrawal && (
+          <DialogContent className="gradient-card border-border/50 max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="font-display text-foreground">Withdrawal Details</DialogTitle>
+              <DialogDescription className="text-muted-foreground text-xs">
+                ID: {selectedWithdrawal.id.slice(0, 8)}...
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <InfoRow label="Telegram ID" value={selectedWithdrawal.telegram_id} />
+              <InfoRow label="Currency" value={selectedWithdrawal.currency} />
+              <InfoRow label="Amount" value={selectedWithdrawal.currency === "USD" ? `$${selectedWithdrawal.amount_usd}` : `${selectedWithdrawal.amount_mmk}`} />
+              <InfoRow label="Points" value={selectedWithdrawal.amount_points.toLocaleString()} />
+              <InfoRow label="Method" value={methodLabels[selectedWithdrawal.withdrawal_method] || selectedWithdrawal.withdrawal_method} />
+              
+              {selectedWithdrawal.binance_account_name && (
+                <InfoRow label="Binance Name" value={selectedWithdrawal.binance_account_name} />
+              )}
+              {selectedWithdrawal.binance_uid && (
+                <InfoRow label="Binance UID" value={selectedWithdrawal.binance_uid} />
+              )}
+              {selectedWithdrawal.bep20_address && (
+                <InfoRow label="BEP20 Address" value={selectedWithdrawal.bep20_address} />
+              )}
+              {selectedWithdrawal.account_name && (
+                <InfoRow label="Account Name" value={selectedWithdrawal.account_name} />
+              )}
+              {selectedWithdrawal.phone_number && (
+                <InfoRow label="Phone" value={selectedWithdrawal.phone_number} />
+              )}
+              <InfoRow label="Created" value={new Date(selectedWithdrawal.created_at).toLocaleString()} />
+            </div>
+            {selectedWithdrawal.status === "pending" && (
+              <div className="flex gap-3 mt-2">
+                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "rejected")} disabled={actionLoading}>
+                  <XCircle className="w-4 h-4" /> Reject
+                </Button>
+                <Button className="flex-1 gradient-primary text-primary-foreground font-display" onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "approved")} disabled={actionLoading}>
+                  <CheckCircle className="w-4 h-4" /> Approve
+                </Button>
+              </div>
+            )}
+            {selectedWithdrawal.status !== "pending" && (
+              <Badge variant={selectedWithdrawal.status === "approved" ? "default" : "destructive"} className="w-full justify-center py-2 font-display">
+                {selectedWithdrawal.status === "approved" ? "✅ Approved" : "❌ Rejected"}
               </Badge>
             )}
           </DialogContent>
@@ -317,7 +463,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground text-xs font-display">{label}</span>
-      <span className="text-foreground text-sm font-display font-bold">{value}</span>
+      <span className="text-foreground text-sm font-display font-bold break-all text-right max-w-[60%]">{value}</span>
     </div>
   );
 }

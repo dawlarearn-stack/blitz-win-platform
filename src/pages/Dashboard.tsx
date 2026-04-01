@@ -4,6 +4,7 @@ import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clo
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
+import WithdrawFlow from "@/components/WithdrawFlow";
 
 // Demo referrals for UI preview (remove when backend is live)
 const DEMO_REFERRALS: Referral[] = [
@@ -24,12 +25,13 @@ function getDaysRemaining(r: Referral): number {
 }
 
 const Dashboard = () => {
-  const { data, claimReferral } = useGameStore();
+  const { data, claimReferral, spendPoints } = useGameStore();
   const dollarValue = getPointsDollarValue(data.points);
   const canWithdraw = parseFloat(dollarValue) >= 5;
   const [copied, setCopied] = useState(false);
   const [referralExpanded, setReferralExpanded] = useState(true);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   // Use demo referrals if no real ones exist
   const referrals = data.referrals.length > 0 ? data.referrals : DEMO_REFERRALS;
@@ -111,6 +113,7 @@ const Dashboard = () => {
             </p>
             <button
               disabled={!canWithdraw}
+              onClick={() => canWithdraw && setWithdrawOpen(true)}
               className={`font-display text-sm font-bold px-8 py-3 rounded-xl transition-all ${
                 canWithdraw
                   ? "gradient-primary text-primary-foreground neon-glow hover:scale-105"
@@ -120,6 +123,14 @@ const Dashboard = () => {
               {canWithdraw ? `WITHDRAW $${dollarValue}` : `Need $${(5 - parseFloat(dollarValue)).toFixed(2)} more`}
             </button>
           </motion.div>
+
+          <WithdrawFlow
+            open={withdrawOpen}
+            onOpenChange={setWithdrawOpen}
+            points={data.points}
+            dollarValue={dollarValue}
+            onComplete={(pts) => spendPoints(pts)}
+          />
 
           {/* Referrals & Rewards */}
           <motion.div

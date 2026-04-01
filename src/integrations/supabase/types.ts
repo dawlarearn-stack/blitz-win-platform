@@ -83,6 +83,60 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawal_requests: {
+        Row: {
+          account_name: string | null
+          amount_mmk: string | null
+          amount_points: number
+          amount_usd: string | null
+          bep20_address: string | null
+          binance_account_name: string | null
+          binance_uid: string | null
+          created_at: string
+          currency: string
+          id: string
+          phone_number: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          telegram_id: string
+          updated_at: string
+          withdrawal_method: Database["public"]["Enums"]["withdrawal_method"]
+        }
+        Insert: {
+          account_name?: string | null
+          amount_mmk?: string | null
+          amount_points: number
+          amount_usd?: string | null
+          bep20_address?: string | null
+          binance_account_name?: string | null
+          binance_uid?: string | null
+          created_at?: string
+          currency: string
+          id?: string
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          telegram_id: string
+          updated_at?: string
+          withdrawal_method: Database["public"]["Enums"]["withdrawal_method"]
+        }
+        Update: {
+          account_name?: string | null
+          amount_mmk?: string | null
+          amount_points?: number
+          amount_usd?: string | null
+          bep20_address?: string | null
+          binance_account_name?: string | null
+          binance_uid?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          phone_number?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          telegram_id?: string
+          updated_at?: string
+          withdrawal_method?: Database["public"]["Enums"]["withdrawal_method"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -114,6 +168,8 @@ export type Database = {
       app_role: "admin" | "moderator" | "user"
       payment_method: "kpay" | "wavepay" | "binance"
       payment_status: "pending" | "approved" | "rejected"
+      withdrawal_method: "binance_id" | "bep20" | "kbz_pay" | "wave_pay"
+      withdrawal_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -244,6 +300,8 @@ export const Constants = {
       app_role: ["admin", "moderator", "user"],
       payment_method: ["kpay", "wavepay", "binance"],
       payment_status: ["pending", "approved", "rejected"],
+      withdrawal_method: ["binance_id", "bep20", "kbz_pay", "wave_pay"],
+      withdrawal_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
