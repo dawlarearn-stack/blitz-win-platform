@@ -91,6 +91,7 @@ const ColorMatch = () => {
             setFeedback(null);
             playGameOver();
             setGameState("lost");
+            completeLevel("color-match", level, false);
           }, 500);
           clearInterval(timerRef.current);
           return 0;
