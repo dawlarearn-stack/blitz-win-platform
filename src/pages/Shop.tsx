@@ -84,12 +84,6 @@ const Shop = () => {
     }
   };
 
-  const handleBuy = () => {
-    if (!selectedPack) return;
-    // Simulated purchase — in production this calls payment API
-    addEnergy(selectedPack.energy);
-    setResultMsg(`✅ +${selectedPack.energy} Energy ရရှိပါပြီ!`);
-  };
 
   return (
     <div className="min-h-screen bg-background">
