@@ -305,7 +305,7 @@ export default function MMKPaymentFlow({ open, onOpenChange, pack, onComplete }:
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-display">ငွေလွှဲပြေစာ Screenshot</Label>
+                <Label className="text-xs text-muted-foreground font-display">ငွေလွှဲပြေစာ Screenshot <span className="text-destructive">*</span></Label>
                 <input
                   ref={fileInputRef}
                   type="file"
