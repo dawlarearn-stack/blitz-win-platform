@@ -62,6 +62,65 @@ Deno.serve(async (req) => {
 
       if (error) throw error
 
+      // Send Telegram notification if approved and telegram_id exists
+      if (action === 'approved' && data.telegram_id) {
+        try {
+          const GATEWAY_URL = 'https://connector-gateway.lovable.dev/telegram'
+          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+          const TELEGRAM_API_KEY = Deno.env.get('TELEGRAM_API_KEY')
+
+          if (LOVABLE_API_KEY && TELEGRAM_API_KEY) {
+            const message = `✅ <b>Energy ဝယ်ယူမှု Approved!</b>\n\n⚡ Energy: +${data.energy_amount.toLocaleString()}\n💰 Price: ${data.price_mmk}\n\nသင့် Account ထဲသို့ Energy ထည့်ပေးပြီးပါပြီ။ 🎮`
+
+            await fetch(`${GATEWAY_URL}/sendMessage`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+                'X-Connection-Api-Key': TELEGRAM_API_KEY,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                chat_id: data.telegram_id,
+                text: message,
+                parse_mode: 'HTML',
+              }),
+            })
+          }
+        } catch (telegramErr) {
+          console.error('Telegram notification failed:', telegramErr)
+          // Don't fail the approval if notification fails
+        }
+      }
+
+      // Send rejection notification too
+      if (action === 'rejected' && data.telegram_id) {
+        try {
+          const GATEWAY_URL = 'https://connector-gateway.lovable.dev/telegram'
+          const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+          const TELEGRAM_API_KEY = Deno.env.get('TELEGRAM_API_KEY')
+
+          if (LOVABLE_API_KEY && TELEGRAM_API_KEY) {
+            const message = `❌ <b>Energy ဝယ်ယူမှု Rejected</b>\n\n⚡ Energy: ${data.energy_amount.toLocaleString()}\n💰 Price: ${data.price_mmk}\n\nငွေလွှဲမှုအချက်အလက်များ မမှန်ကန်ပါ။ ပြန်လည်စစ်ဆေးပြီး ထပ်မံဝယ်ယူနိုင်ပါသည်။`
+
+            await fetch(`${GATEWAY_URL}/sendMessage`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+                'X-Connection-Api-Key': TELEGRAM_API_KEY,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                chat_id: data.telegram_id,
+                text: message,
+                parse_mode: 'HTML',
+              }),
+            })
+          }
+        } catch (telegramErr) {
+          console.error('Telegram notification failed:', telegramErr)
+        }
+      }
+
       return new Response(JSON.stringify({ success: true, data }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
