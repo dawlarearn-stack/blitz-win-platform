@@ -122,7 +122,7 @@ const QuickMath = () => {
     } else {
       playClickBomb();
       setFeedback("wrong");
-      setTimeout(() => { setFeedback(null); clearInterval(timerRef.current); playGameOver(); setGameState("lost"); }, 500);
+      setTimeout(() => { setFeedback(null); clearInterval(timerRef.current); playGameOver(); setGameState("lost"); completeLevel("quick-math", level, false); }, 500);
     }
   };
 
