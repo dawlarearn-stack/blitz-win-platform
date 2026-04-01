@@ -48,6 +48,7 @@ export function useGameStore() {
   const [data, setData] = useState<UserData>(defaultData);
   const [loading, setLoading] = useState(true);
   const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [startingLevel, setStartingLevel] = useState(false);
   const telegramId = useRef(getTelegramId());
 
   // Load state from server on mount
