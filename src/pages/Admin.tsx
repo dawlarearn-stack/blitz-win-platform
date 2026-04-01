@@ -302,7 +302,7 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="font-display text-xl font-bold text-foreground">Admin</h1>
             </div>
-            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); }} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); if (tab === "security") fetchSuspicious(); }} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </motion.div>
