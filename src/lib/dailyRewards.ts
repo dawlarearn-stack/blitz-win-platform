@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { showRewardAd } from "@/lib/adsgram";
+import { showMonetangRewardAd } from "@/lib/monetag";
 const DAILY_KEY = "pgr_daily_rewards";
 
 export interface CheckinDay {
@@ -175,8 +176,10 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
       const last = daily.adLastWatch[taskId] || 0;
       if (Date.now() - last < task.cooldown * 1000) return;
     }
-    // Show rewarded ad
-    const adWatched = await showRewardAd();
+    // Show rewarded ad from the appropriate provider
+    const adWatched = task.provider === "Monetag"
+      ? await showMonetangRewardAd()
+      : await showRewardAd();
     if (!adWatched) return; // ad skipped or failed — don't count
     setDaily((prev) => {
       const next = {

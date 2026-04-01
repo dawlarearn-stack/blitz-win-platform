@@ -5,6 +5,7 @@ import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 import { showRewardAd } from "@/lib/adsgram";
+import { trackNextLevel } from "@/lib/monetag";
 
 const WORDS_POOL = [
   "game", "play", "coin", "star", "fire", "gold", "hero", "luck", "dice", "card",
@@ -113,7 +114,7 @@ const WordScramble = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const nextLevel = () => { trackNextLevel(); setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (

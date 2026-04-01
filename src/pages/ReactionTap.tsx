@@ -5,6 +5,7 @@ import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 import { showRewardAd } from "@/lib/adsgram";
+import { trackNextLevel } from "@/lib/monetag";
 
 function getLevelConfig(level: number) {
   if (level <= 10) return { targetCount: 1, speed: 100, size: 56 };
@@ -221,6 +222,7 @@ const ReactionTap = () => {
   };
 
   const nextLevel = () => {
+    trackNextLevel();
     setLevel((l) => Math.min(l + 1, 100));
     setGameState("idle");
   };

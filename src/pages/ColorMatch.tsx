@@ -5,6 +5,7 @@ import GameLayout from "@/components/GameLayout";
 import { useGameStore } from "@/lib/gameStore";
 import { playClickSafe, playClickBomb, playLevelWin, playGameOver } from "@/lib/sounds";
 import { showRewardAd } from "@/lib/adsgram";
+import { trackNextLevel } from "@/lib/monetag";
 
 const COLORS = [
   { name: "Red", hsl: "0 80% 55%" },
@@ -137,7 +138,7 @@ const ColorMatch = () => {
     }
   };
 
-  const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const nextLevel = () => { trackNextLevel(); setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
