@@ -4,6 +4,7 @@ import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clo
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
+import WithdrawFlow from "@/components/WithdrawFlow";
 
 // Demo referrals for UI preview (remove when backend is live)
 const DEMO_REFERRALS: Referral[] = [
