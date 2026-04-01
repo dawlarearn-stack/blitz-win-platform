@@ -238,7 +238,6 @@ const Shop = () => {
                 >
                   Confirm
                 </Button>
-                </Button>
               </>
             )}
           </div>
