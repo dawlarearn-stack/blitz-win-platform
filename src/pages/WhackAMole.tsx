@@ -141,6 +141,7 @@ const WhackAMole = () => {
         setTapped(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("whack-a-mole", level, false);
       }, 500);
       return;
     }
