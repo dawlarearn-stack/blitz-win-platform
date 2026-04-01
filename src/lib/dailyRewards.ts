@@ -49,6 +49,9 @@ export const AD_TASKS: AdTask[] = [
   { id: "ad5", label: "Daily Ad Watch Bonus 5", required: 5, rewardPoints: 0, rewardEnergy: 5, provider: "AdsGram", cooldown: 60 },
 ];
 
+export const DAILY_FREE_ENERGY = 1000;
+export const REQUIRED_AD_TASKS_FOR_FREE_ENERGY = ["ad1", "ad2", "ad3"];
+
 export interface DailyData {
   lastCheckinDate: string; // YYYY-MM-DD
   checkinStreak: number; // 0-6 index of last claimed day
@@ -58,6 +61,7 @@ export interface DailyData {
   adClaimed: string[]; // ad task ids claimed
   adLastWatch: Record<string, number>; // ad task id -> timestamp of last watch
   resetDate: string; // YYYY-MM-DD when data was last reset
+  freeEnergyClaimed: boolean; // whether daily free energy was claimed
 }
 
 function today(): string {
