@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      bot_users: {
+        Row: {
+          first_name: string | null
+          id: string
+          joined_at: string
+          telegram_id: string
+          username: string | null
+        }
+        Insert: {
+          first_name?: string | null
+          id?: string
+          joined_at?: string
+          telegram_id: string
+          username?: string | null
+        }
+        Update: {
+          first_name?: string | null
+          id?: string
+          joined_at?: string
+          telegram_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           created_at: string
@@ -62,6 +104,39 @@ export type Database = {
           telegram_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      telegram_bot_state: {
+        Row: {
+          id: number
+          update_offset: number
+          updated_at: string
+        }
+        Insert: {
+          id: number
+          update_offset?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          update_offset?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_heartbeats: {
+        Row: {
+          last_seen_at: string
+          telegram_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          telegram_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          telegram_id?: string
         }
         Relationships: []
       }
