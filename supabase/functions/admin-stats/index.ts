@@ -42,13 +42,27 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (action === "suspicious") {
+        const { data, error } = await supabase
+          .from("suspicious_activity")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        return new Response(JSON.stringify({ data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Default: return stats
-      const [totalUsersRes, activeUsersRes, pendingPaymentsRes, pendingWithdrawalsRes] = await Promise.all([
+      const [totalUsersRes, activeUsersRes, pendingPaymentsRes, pendingWithdrawalsRes, suspiciousRes] = await Promise.all([
         supabase.from("bot_users").select("id", { count: "exact", head: true }),
         supabase.from("user_heartbeats").select("telegram_id", { count: "exact", head: true })
           .gte("last_seen_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()),
         supabase.from("payment_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("withdrawal_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("suspicious_activity").select("id", { count: "exact", head: true })
+          .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
       ]);
 
       return new Response(JSON.stringify({
@@ -56,6 +70,7 @@ Deno.serve(async (req) => {
         activeUsers: activeUsersRes.count ?? 0,
         pendingPayments: pendingPaymentsRes.count ?? 0,
         pendingWithdrawals: pendingWithdrawalsRes.count ?? 0,
+        suspiciousCount: suspiciousRes.count ?? 0,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
