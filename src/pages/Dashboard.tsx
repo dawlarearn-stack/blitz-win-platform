@@ -133,6 +133,11 @@ const Dashboard = () => {
             onComplete={(pts) => spendPoints(pts)}
           />
 
+          {/* Withdrawal History */}
+          <div className="mb-6">
+            <WithdrawalHistory />
+          </div>
+
           {/* Referrals & Rewards */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
