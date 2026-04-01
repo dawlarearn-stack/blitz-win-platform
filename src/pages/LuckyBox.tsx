@@ -168,7 +168,7 @@ const LuckyBox = () => {
   }, [boxes, gameState, picksLeft, level, totalRoundPoints, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   const getBoxStyle = (box: BoxState, idx: number) => {
     if (!box.revealed) {

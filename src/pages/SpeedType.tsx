@@ -107,7 +107,7 @@ const SpeedType = () => {
   };
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
     <GameLayout title="Speed Type" level={level} points={data.points} energy={data.energy}>

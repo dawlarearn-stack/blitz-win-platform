@@ -169,7 +169,7 @@ const WhackAMole = () => {
   }, [gameState, activeCells, hitsNeeded, level, completeLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   const gridSize = getGridSize(level);
   const cols = gridSize <= 9 ? 3 : 4;

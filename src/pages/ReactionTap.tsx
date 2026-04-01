@@ -224,7 +224,7 @@ const ReactionTap = () => {
     setGameState("idle");
   };
 
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
     <GameLayout title="Reaction Tap" level={level} points={data.points} energy={data.energy}>

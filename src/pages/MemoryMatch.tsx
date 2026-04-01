@@ -148,7 +148,7 @@ const MemoryMatch = () => {
   }, [level, startLevel]);
 
   const nextLevel = () => { setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
-  const retry = () => { setGameState("idle"); };
+  const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   // Grid columns based on card count
   const totalCards = pairCount * 2;
