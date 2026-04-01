@@ -334,7 +334,7 @@ export default function MMKPaymentFlow({ open, onOpenChange, pack, onComplete }:
                 <Button
                   className="flex-1 gradient-primary text-primary-foreground font-display"
                   onClick={handleSubmit}
-                  disabled={submitting || !receiptLast4 || !senderName || !senderPhone}
+                  disabled={submitting || !receiptLast4 || !senderName || !senderPhone || !screenshotFile}
                 >
                   {submitting ? "Submitting..." : "Confirm"}
                 </Button>
