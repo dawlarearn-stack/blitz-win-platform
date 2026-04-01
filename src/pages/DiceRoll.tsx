@@ -66,8 +66,7 @@ const DiceRoll = () => {
             playLevelWin();
             const pts = getPointsForLevel(level);
             setEarnedPoints(pts);
-            addPoints(pts);
-            updateProgress("dice-roll", level);
+            completeLevel("dice-roll", level, true);
             setGameState("won");
           }, 500);
         } else {
