@@ -150,9 +150,10 @@ const NumberSequence = () => {
         setFeedback(null);
         playGameOver();
         setGameState("lost");
+        completeLevel("number-sequence", level, false);
       }, 600);
     }
-  }, [gameState, feedback, puzzle, correct, roundsNeeded, level, addPoints, updateProgress]);
+  }, [gameState, feedback, puzzle, correct, roundsNeeded, level, completeLevel]);
 
   const startGame = useCallback(() => {
     if (!spendEnergy(1)) return;
