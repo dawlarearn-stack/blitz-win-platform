@@ -45,7 +45,6 @@ type ModalType = "convert" | null;
 const Shop = () => {
   const { data, addEnergy, spendPoints } = useGameStore();
   const [modal, setModal] = useState<ModalType>(null);
-  const [selectedPack, setSelectedPack] = useState<EnergyPack | null>(null);
   const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
