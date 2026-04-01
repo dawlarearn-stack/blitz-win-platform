@@ -156,7 +156,7 @@ const ReactionTap = () => {
         return t - 1;
       });
     }, 1000);
-  }, [level, cleanup]);
+  }, [level, cleanup, startLevel]);
 
   // Win/lose check
   useEffect(() => {
