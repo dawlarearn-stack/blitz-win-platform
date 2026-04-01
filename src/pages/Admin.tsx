@@ -23,7 +23,7 @@ interface PaymentRequest {
   telegram_id: string | null;
   energy_amount: number;
   price_mmk: string;
-  payment_method: "kpay" | "wavepay";
+  payment_method: "kpay" | "wavepay" | "binance";
   receipt_last4: string;
   sender_name: string;
   sender_phone: string;
@@ -215,8 +215,8 @@ const Admin = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Badge
-                          variant={req.payment_method === "kpay" ? "default" : "secondary"}
-                          className="text-[10px] font-display"
+                          variant={req.payment_method === "kpay" ? "default" : req.payment_method === "binance" ? "outline" : "secondary"}
+                          className={`text-[10px] font-display ${req.payment_method === "binance" ? "border-yellow-500/50 text-yellow-500" : ""}`}
                         >
                           {req.payment_method.toUpperCase()}
                         </Badge>

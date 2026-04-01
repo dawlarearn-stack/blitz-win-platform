@@ -340,7 +340,7 @@ export default function USDPaymentFlow({ open, onOpenChange, pack, onComplete }:
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-display">Transaction Screenshot</Label>
+                <Label className="text-xs text-muted-foreground font-display">Transaction Screenshot <span className="text-destructive">*</span></Label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -369,7 +369,7 @@ export default function USDPaymentFlow({ open, onOpenChange, pack, onComplete }:
                 <Button
                   className="flex-1 gradient-primary text-primary-foreground font-display"
                   onClick={handleSubmit}
-                  disabled={submitting || !receiptLast4 || !senderName || !senderPhone}
+                  disabled={submitting || !receiptLast4 || !senderName || !senderPhone || !screenshotFile}
                 >
                   {submitting ? "Submitting..." : "Confirm"}
                 </Button>
