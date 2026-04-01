@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn, Wallet, Zap } from "lucide-react";
+import {
+  Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
+  Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -49,8 +48,26 @@ interface WithdrawalRequest {
   created_at: string;
 }
 
+interface EnergyPack {
+  energy: number;
+  priceUSD: string;
+  priceMMK: string;
+}
+
+interface ConversionOption {
+  energy: number;
+  pointsCost: number;
+}
+
+interface AdminStats {
+  totalUsers: number;
+  activeUsers: number;
+  pendingPayments: number;
+  pendingWithdrawals: number;
+}
+
 type StatusFilter = "pending" | "approved" | "rejected";
-type TabType = "payments" | "withdrawals";
+type TabType = "payments" | "withdrawals" | "config";
 
 const Admin = () => {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
@@ -65,18 +82,53 @@ const Admin = () => {
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRequest | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  // Stats
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0 });
+
+  // Config
+  const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
+  const [conversions, setConversions] = useState<ConversionOption[]>([]);
+  const [configLoading, setConfigLoading] = useState(false);
+
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  const fetchStats = useCallback(async () => {
     if (!adminKey) return;
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const data = await resp.json();
+      if (resp.ok) setStats(data);
+    } catch {}
+  }, [adminKey, baseUrl, anonKey]);
+
+  const fetchConfig = useCallback(async () => {
+    if (!adminKey) return;
+    setConfigLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=config`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const result = await resp.json();
+      if (result.data) {
+        for (const item of result.data) {
+          if (item.key === "energy_packs") setEnergyPacks(item.value);
+          if (item.key === "point_conversions") setConversions(item.value);
+        }
+      }
+    } catch {}
+    setConfigLoading(false);
+  }, [adminKey, baseUrl, anonKey]);
+
+  const fetchData = useCallback(async () => {
+    if (!adminKey || tab === "config") return;
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
-      const url = `${baseUrl}/functions/v1/${endpoint}?status=${filter}`;
-      const resp = await fetch(url, {
-        headers: {
-          "x-admin-key": adminKey,
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
+      const resp = await fetch(`${baseUrl}/functions/v1/${endpoint}?status=${filter}`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
       });
       const result = await resp.json();
       if (result.error) {
@@ -88,11 +140,8 @@ const Admin = () => {
         }
         throw new Error(result.error);
       }
-      if (tab === "payments") {
-        setRequests(result.data || []);
-      } else {
-        setWithdrawals(result.data || []);
-      }
+      if (tab === "payments") setRequests(result.data || []);
+      else setWithdrawals(result.data || []);
       setAuthenticated(true);
     } catch (err: any) {
       console.error(err);
@@ -100,11 +149,22 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  }, [adminKey, filter, tab]);
+  }, [adminKey, filter, tab, baseUrl, anonKey]);
 
   useEffect(() => {
-    if (adminKey) fetchData();
-  }, [adminKey, filter, tab, fetchData]);
+    if (adminKey) {
+      fetchStats();
+      if (tab === "config") fetchConfig();
+      else fetchData();
+    }
+  }, [adminKey, filter, tab, fetchData, fetchStats, fetchConfig]);
+
+  // Auto-refresh stats every 30s
+  useEffect(() => {
+    if (!adminKey) return;
+    const interval = setInterval(fetchStats, 30_000);
+    return () => clearInterval(interval);
+  }, [adminKey, fetchStats]);
 
   const handleLogin = () => {
     if (!keyInput.trim()) return;
@@ -117,14 +177,9 @@ const Admin = () => {
   const handlePaymentAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const resp = await fetch(`${baseUrl}/functions/v1/admin-payments`, {
         method: "POST",
-        headers: {
-          "x-admin-key": adminKey,
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
       });
       const result = await resp.json();
@@ -132,8 +187,8 @@ const Admin = () => {
       toast.success(action === "approved" ? "✅ Approved!" : "❌ Rejected!");
       setSelectedRequest(null);
       fetchData();
-    } catch (err: any) {
-      console.error(err);
+      fetchStats();
+    } catch {
       toast.error("Action failed");
     } finally {
       setActionLoading(false);
@@ -143,14 +198,9 @@ const Admin = () => {
   const handleWithdrawalAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const resp = await fetch(`${baseUrl}/functions/v1/admin-withdrawals`, {
         method: "POST",
-        headers: {
-          "x-admin-key": adminKey,
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
       });
       const result = await resp.json();
@@ -158,11 +208,26 @@ const Admin = () => {
       toast.success(action === "approved" ? "✅ Approved!" : "❌ Rejected!");
       setSelectedWithdrawal(null);
       fetchData();
-    } catch (err: any) {
-      console.error(err);
+      fetchStats();
+    } catch {
       toast.error("Action failed");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const saveConfig = async (key: string, value: any) => {
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      });
+      const result = await resp.json();
+      if (result.error) throw new Error(result.error);
+      toast.success("✅ Saved!");
+    } catch {
+      toast.error("Save failed");
     }
   };
 
@@ -177,11 +242,8 @@ const Admin = () => {
   if (!authenticated && !adminKey) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="gradient-card rounded-2xl p-6 border border-border/50 max-w-sm w-full space-y-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="gradient-card rounded-2xl p-6 border border-border/50 max-w-sm w-full space-y-4">
           <div className="text-center">
             <Shield className="w-10 h-10 text-primary mx-auto mb-2" />
             <h1 className="font-display text-xl font-bold text-foreground">Admin Dashboard</h1>
@@ -189,14 +251,9 @@ const Admin = () => {
           </div>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground font-display">Admin Secret Key</Label>
-            <Input
-              type="password"
-              placeholder="Enter admin key"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              className="bg-muted/50 border-border/50"
-            />
+            <Input type="password" placeholder="Enter admin key" value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="bg-muted/50 border-border/50" />
           </div>
           <Button className="w-full gradient-primary text-primary-foreground font-display" onClick={handleLogin}>
             <LogIn className="w-4 h-4" /> Login
@@ -213,145 +270,136 @@ const Admin = () => {
       <div className="pt-6 pb-20 px-4">
         <div className="container max-w-2xl">
           {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-4"
-          >
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="font-display text-xl font-bold text-foreground">Admin</h1>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); }} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </motion.div>
 
+          {/* Stats Cards */}
+          <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 gap-3 mb-4">
+            <StatsCard icon={<Users className="w-4 h-4" />} label="Total Users" value={stats.totalUsers} color="text-primary" />
+            <StatsCard icon={<Activity className="w-4 h-4" />} label="Online Now" value={stats.activeUsers} color="text-green-500" pulse />
+            <StatsCard icon={<Zap className="w-4 h-4" />} label="Pending Payments" value={stats.pendingPayments} color="text-yellow-500" />
+            <StatsCard icon={<Wallet className="w-4 h-4" />} label="Pending Withdrawals" value={stats.pendingWithdrawals} color="text-accent" />
+          </motion.div>
+
           {/* Tab switcher */}
           <div className="flex gap-2 mb-4">
-            <Button
-              variant={tab === "payments" ? "default" : "outline"}
-              size="sm"
+            <Button variant={tab === "payments" ? "default" : "outline"} size="sm"
               className={`font-display text-xs ${tab === "payments" ? "gradient-primary text-primary-foreground" : ""}`}
-              onClick={() => { setTab("payments"); setFilter("pending"); }}
-            >
-              <Zap className="w-3 h-3" /> Energy Purchases
+              onClick={() => { setTab("payments"); setFilter("pending"); }}>
+              <Zap className="w-3 h-3" /> Payments
             </Button>
-            <Button
-              variant={tab === "withdrawals" ? "default" : "outline"}
-              size="sm"
+            <Button variant={tab === "withdrawals" ? "default" : "outline"} size="sm"
               className={`font-display text-xs ${tab === "withdrawals" ? "gradient-primary text-primary-foreground" : ""}`}
-              onClick={() => { setTab("withdrawals"); setFilter("pending"); }}
-            >
+              onClick={() => { setTab("withdrawals"); setFilter("pending"); }}>
               <Wallet className="w-3 h-3" /> Withdrawals
             </Button>
+            <Button variant={tab === "config" ? "default" : "outline"} size="sm"
+              className={`font-display text-xs ${tab === "config" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => setTab("config")}>
+              <Settings className="w-3 h-3" /> Pricing
+            </Button>
           </div>
 
-          {/* Status filter */}
-          <div className="flex gap-2 mb-4">
-            {(["pending", "approved", "rejected"] as StatusFilter[]).map((s) => (
-              <Button
-                key={s}
-                variant={filter === s ? "default" : "outline"}
-                size="sm"
-                className={`font-display text-xs ${filter === s ? "gradient-primary text-primary-foreground" : ""}`}
-                onClick={() => setFilter(s)}
-              >
-                {s === "pending" && <Clock className="w-3 h-3" />}
-                {s === "approved" && <CheckCircle className="w-3 h-3" />}
-                {s === "rejected" && <XCircle className="w-3 h-3" />}
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-                {s === "pending" && currentList.length > 0 && (
-                  <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">
-                    {currentList.length}
-                  </Badge>
+          {/* Config Tab */}
+          {tab === "config" ? (
+            <ConfigPanel
+              energyPacks={energyPacks}
+              conversions={conversions}
+              setEnergyPacks={setEnergyPacks}
+              setConversions={setConversions}
+              onSave={saveConfig}
+              loading={configLoading}
+            />
+          ) : (
+            <>
+              {/* Status filter */}
+              <div className="flex gap-2 mb-4">
+                {(["pending", "approved", "rejected"] as StatusFilter[]).map((s) => (
+                  <Button key={s} variant={filter === s ? "default" : "outline"} size="sm"
+                    className={`font-display text-xs ${filter === s ? "gradient-primary text-primary-foreground" : ""}`}
+                    onClick={() => setFilter(s)}>
+                    {s === "pending" && <Clock className="w-3 h-3" />}
+                    {s === "approved" && <CheckCircle className="w-3 h-3" />}
+                    {s === "rejected" && <XCircle className="w-3 h-3" />}
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                    {s === "pending" && currentList.length > 0 && (
+                      <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{currentList.length}</Badge>
+                    )}
+                  </Button>
+                ))}
+              </div>
+
+              {/* List */}
+              <ScrollArea className="h-[calc(100vh-380px)]">
+                {loading ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
+                ) : currentList.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm font-display">{filter} requests မရှိပါ</div>
+                ) : tab === "payments" ? (
+                  <div className="space-y-3">
+                    {requests.map((req) => (
+                      <motion.div key={req.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                        className="gradient-card rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                        onClick={() => setSelectedRequest(req)}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={req.payment_method === "kpay" ? "default" : req.payment_method === "binance" ? "outline" : "secondary"}
+                              className={`text-[10px] font-display ${req.payment_method === "binance" ? "border-yellow-500/50 text-yellow-500" : ""}`}>
+                              {req.payment_method.toUpperCase()}
+                            </Badge>
+                            <span className="font-display text-sm font-bold text-foreground">+{req.energy_amount.toLocaleString()} Energy</span>
+                          </div>
+                          <span className="text-primary font-display text-xs font-bold">{req.price_mmk}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>TG: {req.telegram_id || "N/A"}</span>
+                          <span>{new Date(req.created_at).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                          <span>{req.sender_name} • {req.sender_phone}</span>
+                          <span>Receipt: ...{req.receipt_last4}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {withdrawals.map((w) => (
+                      <motion.div key={w.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                        className="gradient-card rounded-xl p-4 border border-border/50 hover:border-accent/30 transition-all cursor-pointer"
+                        onClick={() => setSelectedWithdrawal(w)}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline"
+                              className={`text-[10px] font-display ${w.withdrawal_method.includes("binance") || w.withdrawal_method === "bep20" ? "border-yellow-500/50 text-yellow-500" : "border-primary/50 text-primary"}`}>
+                              {methodLabels[w.withdrawal_method] || w.withdrawal_method}
+                            </Badge>
+                            <span className="font-display text-sm font-bold text-foreground">
+                              {w.currency === "USD" ? `$${w.amount_usd}` : w.amount_mmk}
+                            </span>
+                          </div>
+                          <span className="text-accent font-display text-xs font-bold">{w.amount_points.toLocaleString()} pts</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>TG: {w.telegram_id}</span>
+                          <span>{new Date(w.created_at).toLocaleString()}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 )}
-              </Button>
-            ))}
-          </div>
-
-          {/* List */}
-          <ScrollArea className="h-[calc(100vh-260px)]">
-            {loading ? (
-              <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
-            ) : currentList.length === 0 ? (
-              <div className="text-center py-10 text-muted-foreground text-sm font-display">
-                {filter} requests မရှိပါ
-              </div>
-            ) : tab === "payments" ? (
-              <div className="space-y-3">
-                {requests.map((req) => (
-                  <motion.div
-                    key={req.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="gradient-card rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                    onClick={() => setSelectedRequest(req)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={req.payment_method === "kpay" ? "default" : req.payment_method === "binance" ? "outline" : "secondary"}
-                          className={`text-[10px] font-display ${req.payment_method === "binance" ? "border-yellow-500/50 text-yellow-500" : ""}`}
-                        >
-                          {req.payment_method.toUpperCase()}
-                        </Badge>
-                        <span className="font-display text-sm font-bold text-foreground">
-                          +{req.energy_amount.toLocaleString()} Energy
-                        </span>
-                      </div>
-                      <span className="text-primary font-display text-xs font-bold">{req.price_mmk}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>TG: {req.telegram_id || "N/A"}</span>
-                      <span>{new Date(req.created_at).toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
-                      <span>{req.sender_name} • {req.sender_phone}</span>
-                      <span>Receipt: ...{req.receipt_last4}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {withdrawals.map((w) => (
-                  <motion.div
-                    key={w.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="gradient-card rounded-xl p-4 border border-border/50 hover:border-accent/30 transition-all cursor-pointer"
-                    onClick={() => setSelectedWithdrawal(w)}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] font-display ${
-                            w.withdrawal_method.includes("binance") || w.withdrawal_method === "bep20"
-                              ? "border-yellow-500/50 text-yellow-500"
-                              : "border-primary/50 text-primary"
-                          }`}
-                        >
-                          {methodLabels[w.withdrawal_method] || w.withdrawal_method}
-                        </Badge>
-                        <span className="font-display text-sm font-bold text-foreground">
-                          {w.currency === "USD" ? `$${w.amount_usd}` : w.amount_mmk}
-                        </span>
-                      </div>
-                      <span className="text-accent font-display text-xs font-bold">
-                        {w.amount_points.toLocaleString()} pts
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>TG: {w.telegram_id}</span>
-                      <span>{new Date(w.created_at).toLocaleString()}</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
+              </ScrollArea>
+            </>
+          )}
         </div>
       </div>
 
@@ -361,9 +409,7 @@ const Admin = () => {
           <DialogContent className="gradient-card border-border/50 max-w-sm">
             <DialogHeader>
               <DialogTitle className="font-display text-foreground">Payment Details</DialogTitle>
-              <DialogDescription className="text-muted-foreground text-xs">
-                ID: {selectedRequest.id.slice(0, 8)}...
-              </DialogDescription>
+              <DialogDescription className="text-muted-foreground text-xs">ID: {selectedRequest.id.slice(0, 8)}...</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <InfoRow label="Telegram ID" value={selectedRequest.telegram_id || "N/A"} />
@@ -386,10 +432,12 @@ const Admin = () => {
             </div>
             {selectedRequest.status === "pending" && (
               <div className="flex gap-3 mt-2">
-                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handlePaymentAction(selectedRequest.id, "rejected")} disabled={actionLoading}>
+                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={() => handlePaymentAction(selectedRequest.id, "rejected")} disabled={actionLoading}>
                   <XCircle className="w-4 h-4" /> Reject
                 </Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground font-display" onClick={() => handlePaymentAction(selectedRequest.id, "approved")} disabled={actionLoading}>
+                <Button className="flex-1 gradient-primary text-primary-foreground font-display"
+                  onClick={() => handlePaymentAction(selectedRequest.id, "approved")} disabled={actionLoading}>
                   <CheckCircle className="w-4 h-4" /> Approve
                 </Button>
               </div>
@@ -409,9 +457,7 @@ const Admin = () => {
           <DialogContent className="gradient-card border-border/50 max-w-sm">
             <DialogHeader>
               <DialogTitle className="font-display text-foreground">Withdrawal Details</DialogTitle>
-              <DialogDescription className="text-muted-foreground text-xs">
-                ID: {selectedWithdrawal.id.slice(0, 8)}...
-              </DialogDescription>
+              <DialogDescription className="text-muted-foreground text-xs">ID: {selectedWithdrawal.id.slice(0, 8)}...</DialogDescription>
             </DialogHeader>
             <div className="space-y-3">
               <InfoRow label="Telegram ID" value={selectedWithdrawal.telegram_id} />
@@ -419,30 +465,21 @@ const Admin = () => {
               <InfoRow label="Amount" value={selectedWithdrawal.currency === "USD" ? `$${selectedWithdrawal.amount_usd}` : `${selectedWithdrawal.amount_mmk}`} />
               <InfoRow label="Points" value={selectedWithdrawal.amount_points.toLocaleString()} />
               <InfoRow label="Method" value={methodLabels[selectedWithdrawal.withdrawal_method] || selectedWithdrawal.withdrawal_method} />
-              
-              {selectedWithdrawal.binance_account_name && (
-                <InfoRow label="Binance Name" value={selectedWithdrawal.binance_account_name} />
-              )}
-              {selectedWithdrawal.binance_uid && (
-                <InfoRow label="Binance UID" value={selectedWithdrawal.binance_uid} />
-              )}
-              {selectedWithdrawal.bep20_address && (
-                <InfoRow label="BEP20 Address" value={selectedWithdrawal.bep20_address} />
-              )}
-              {selectedWithdrawal.account_name && (
-                <InfoRow label="Account Name" value={selectedWithdrawal.account_name} />
-              )}
-              {selectedWithdrawal.phone_number && (
-                <InfoRow label="Phone" value={selectedWithdrawal.phone_number} />
-              )}
+              {selectedWithdrawal.binance_account_name && <InfoRow label="Binance Name" value={selectedWithdrawal.binance_account_name} />}
+              {selectedWithdrawal.binance_uid && <InfoRow label="Binance UID" value={selectedWithdrawal.binance_uid} />}
+              {selectedWithdrawal.bep20_address && <InfoRow label="BEP20 Address" value={selectedWithdrawal.bep20_address} />}
+              {selectedWithdrawal.account_name && <InfoRow label="Account Name" value={selectedWithdrawal.account_name} />}
+              {selectedWithdrawal.phone_number && <InfoRow label="Phone" value={selectedWithdrawal.phone_number} />}
               <InfoRow label="Created" value={new Date(selectedWithdrawal.created_at).toLocaleString()} />
             </div>
             {selectedWithdrawal.status === "pending" && (
               <div className="flex gap-3 mt-2">
-                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "rejected")} disabled={actionLoading}>
+                <Button variant="outline" className="flex-1 font-display border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "rejected")} disabled={actionLoading}>
                   <XCircle className="w-4 h-4" /> Reject
                 </Button>
-                <Button className="flex-1 gradient-primary text-primary-foreground font-display" onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "approved")} disabled={actionLoading}>
+                <Button className="flex-1 gradient-primary text-primary-foreground font-display"
+                  onClick={() => handleWithdrawalAction(selectedWithdrawal.id, "approved")} disabled={actionLoading}>
                   <CheckCircle className="w-4 h-4" /> Approve
                 </Button>
               </div>
@@ -458,6 +495,140 @@ const Admin = () => {
     </div>
   );
 };
+
+// Stats Card Component
+function StatsCard({ icon, label, value, color, pulse }: {
+  icon: React.ReactNode; label: string; value: number; color: string; pulse?: boolean;
+}) {
+  return (
+    <div className="gradient-card rounded-xl border border-border/50 p-3">
+      <div className="flex items-center gap-2 mb-1">
+        <span className={color}>{icon}</span>
+        <span className="text-muted-foreground text-[10px] font-display">{label}</span>
+        {pulse && value > 0 && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+      </div>
+      <p className={`font-display text-2xl font-bold ${color}`}>{value.toLocaleString()}</p>
+    </div>
+  );
+}
+
+// Config Panel Component
+function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions, onSave, loading }: {
+  energyPacks: EnergyPack[];
+  conversions: ConversionOption[];
+  setEnergyPacks: (v: EnergyPack[]) => void;
+  setConversions: (v: ConversionOption[]) => void;
+  onSave: (key: string, value: any) => Promise<void>;
+  loading: boolean;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  const updatePack = (index: number, field: keyof EnergyPack, value: string | number) => {
+    const updated = [...energyPacks];
+    (updated[index] as any)[field] = value;
+    setEnergyPacks(updated);
+  };
+
+  const addPack = () => setEnergyPacks([...energyPacks, { energy: 0, priceUSD: "$0", priceMMK: "0 KS" }]);
+  const removePack = (i: number) => setEnergyPacks(energyPacks.filter((_, idx) => idx !== i));
+
+  const updateConversion = (index: number, field: keyof ConversionOption, value: number) => {
+    const updated = [...conversions];
+    updated[index][field] = value;
+    setConversions(updated);
+  };
+
+  const addConversion = () => setConversions([...conversions, { energy: 0, pointsCost: 0 }]);
+  const removeConversion = (i: number) => setConversions(conversions.filter((_, idx) => idx !== i));
+
+  const handleSaveAll = async () => {
+    setSaving(true);
+    await onSave("energy_packs", energyPacks);
+    await onSave("point_conversions", conversions);
+    setSaving(false);
+  };
+
+  if (loading) return <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading config...</div>;
+
+  return (
+    <ScrollArea className="h-[calc(100vh-380px)]">
+      <div className="space-y-6">
+        {/* Energy Packs */}
+        <div className="gradient-card rounded-xl border border-border/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+              <Zap className="w-4 h-4 text-primary" /> Energy Packs (USD / MMK)
+            </h3>
+            <Button variant="outline" size="sm" onClick={addPack} className="text-xs">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {energyPacks.map((pack, i) => (
+              <div key={i} className="grid grid-cols-4 gap-2 items-end">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Energy</Label>
+                  <Input type="number" value={pack.energy} onChange={(e) => updatePack(i, "energy", Number(e.target.value))}
+                    className="bg-muted/50 border-border/50 text-xs h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">USD</Label>
+                  <Input value={pack.priceUSD} onChange={(e) => updatePack(i, "priceUSD", e.target.value)}
+                    className="bg-muted/50 border-border/50 text-xs h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">MMK</Label>
+                  <Input value={pack.priceMMK} onChange={(e) => updatePack(i, "priceMMK", e.target.value)}
+                    className="bg-muted/50 border-border/50 text-xs h-8" />
+                </div>
+                <Button variant="ghost" size="sm" className="h-8 text-destructive" onClick={() => removePack(i)}>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Point Conversions */}
+        <div className="gradient-card rounded-xl border border-border/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+              <ArrowRightLeft className="w-4 h-4 text-accent" /> Points to Energy
+            </h3>
+            <Button variant="outline" size="sm" onClick={addConversion} className="text-xs">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {conversions.map((conv, i) => (
+              <div key={i} className="grid grid-cols-3 gap-2 items-end">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Energy</Label>
+                  <Input type="number" value={conv.energy} onChange={(e) => updateConversion(i, "energy", Number(e.target.value))}
+                    className="bg-muted/50 border-border/50 text-xs h-8" />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Points Cost</Label>
+                  <Input type="number" value={conv.pointsCost} onChange={(e) => updateConversion(i, "pointsCost", Number(e.target.value))}
+                    className="bg-muted/50 border-border/50 text-xs h-8" />
+                </div>
+                <Button variant="ghost" size="sm" className="h-8 text-destructive" onClick={() => removeConversion(i)}>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Save Button */}
+        <Button className="w-full gradient-primary text-primary-foreground font-display" onClick={handleSaveAll} disabled={saving}>
+          <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save All Prices"}
+        </Button>
+      </div>
+    </ScrollArea>
+  );
+}
+
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (

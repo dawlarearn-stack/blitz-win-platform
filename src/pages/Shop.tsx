@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History } from "lucide-react";
 import MMKPaymentFlow from "@/components/MMKPaymentFlow";
@@ -6,6 +6,7 @@ import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -21,19 +22,20 @@ interface EnergyPack {
   priceMMK: string;
 }
 
-const energyPacks: EnergyPack[] = [
+interface ConversionOption {
+  energy: number;
+  pointsCost: number;
+}
+
+// Default fallbacks
+const defaultEnergyPacks: EnergyPack[] = [
   { energy: 1300, priceUSD: "$1", priceMMK: "4,500 KS" },
   { energy: 4200, priceUSD: "$3", priceMMK: "12,900 KS" },
   { energy: 7500, priceUSD: "$5", priceMMK: "19,900 KS" },
   { energy: 17000, priceUSD: "$10", priceMMK: "38,900 KS" },
 ];
 
-interface ConversionOption {
-  energy: number;
-  pointsCost: number;
-}
-
-const conversions: ConversionOption[] = [
+const defaultConversions: ConversionOption[] = [
   { energy: 50, pointsCost: 3000 },
   { energy: 100, pointsCost: 5500 },
   { energy: 200, pointsCost: 10000 },
@@ -48,20 +50,46 @@ const Shop = () => {
   const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
-  const [mmkFlowPack, setMmkFlowPack] = useState<EnergyPack | null>(null);
+  const [mmkPack, setMmkPack] = useState<{ energy: number; priceMMK: string } | null>(null);
   const [usdFlowOpen, setUsdFlowOpen] = useState(false);
-  const [usdFlowPack, setUsdFlowPack] = useState<EnergyPack | null>(null);
+  const [usdPack, setUsdPack] = useState<{ energy: number; priceUSD: string } | null>(null);
+
+  // Dynamic pricing from DB
+  const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>(defaultEnergyPacks);
+  const [conversions, setConversions] = useState<ConversionOption[]>(defaultConversions);
+
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const { data: configs } = await supabase
+          .from("app_config")
+          .select("key, value")
+          .in("key", ["energy_packs", "point_conversions"]);
+
+        if (configs) {
+          for (const c of configs) {
+            if (c.key === "energy_packs" && Array.isArray(c.value)) {
+              setEnergyPacks(c.value as unknown as EnergyPack[]);
+            }
+            if (c.key === "point_conversions" && Array.isArray(c.value)) {
+              setConversions(c.value as unknown as ConversionOption[]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch pricing:", err);
+      }
+    };
+    fetchPricing();
+  }, []);
 
   const openBuy = (pack: EnergyPack, type: "usd" | "wavepay") => {
-    if (type === "wavepay") {
-      setMmkFlowPack(pack);
-      setMmkFlowOpen(true);
-      return;
-    }
     if (type === "usd") {
-      setUsdFlowPack(pack);
+      setUsdPack({ energy: pack.energy, priceUSD: pack.priceUSD });
       setUsdFlowOpen(true);
-      return;
+    } else {
+      setMmkPack({ energy: pack.energy, priceMMK: pack.priceMMK });
+      setMmkFlowOpen(true);
     }
   };
 
@@ -76,210 +104,138 @@ const Shop = () => {
     const ok = spendPoints(selectedConversion.pointsCost);
     if (ok) {
       addEnergy(selectedConversion.energy);
-      setResultMsg(`✅ +${selectedConversion.energy} Energy ရရှိပါပြီ!`);
+      setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
     } else {
       setResultMsg("❌ Points မလုံလောက်ပါ");
     }
   };
 
-
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-20 md:pt-24 pb-20 px-4">
-        <div className="container max-w-lg">
-          {/* Balance Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="gradient-card rounded-2xl p-5 border border-border/50 neon-border mb-6"
-          >
-            <p className="text-muted-foreground text-xs mb-3 font-display">MY BALANCE</p>
-            <div className="flex items-center justify-around">
-              <div className="text-center">
-                <Coins className="w-6 h-6 text-primary mx-auto mb-1" />
-                <p className="font-display text-lg font-bold text-foreground">{data.points.toLocaleString()}</p>
-                <p className="text-muted-foreground text-[10px]">Points</p>
-              </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
-                <Zap className="w-6 h-6 text-accent mx-auto mb-1" />
-                <p className="font-display text-lg font-bold text-foreground">{data.energy.toLocaleString()}</p>
-                <p className="text-muted-foreground text-[10px]">Energy</p>
-              </div>
-              <div className="w-px h-10 bg-border" />
-              <div className="text-center">
-                <span className="text-lg">💵</span>
-                <p className="font-display text-lg font-bold text-foreground">${getPointsDollarValue(data.points)}</p>
-                <p className="text-muted-foreground text-[10px]">Value</p>
-              </div>
+      <div className="pt-6 pb-20 px-4">
+        <div className="container max-w-md">
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-6">
+            <ShoppingCart className="w-8 h-8 text-primary mx-auto mb-2" />
+            <h1 className="font-display text-2xl font-bold text-foreground">Energy Shop</h1>
+            <p className="text-muted-foreground text-xs mt-1">Energy ဝယ်ယူပြီး ဂိမ်းတွေကိုကစားပါ</p>
+          </motion.div>
+
+          {/* Balance */}
+          <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="gradient-card rounded-2xl p-4 border border-border/50 mb-6 flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-[10px] font-display uppercase tracking-wider">Balance</p>
+              <p className="font-display text-lg font-bold text-foreground">{data.points.toLocaleString()} pts</p>
+              <p className="text-muted-foreground text-[10px]">≈ {getPointsDollarValue(data.points)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-muted-foreground text-[10px] font-display uppercase tracking-wider">Energy</p>
+              <p className="font-display text-lg font-bold text-primary">{data.energy.toLocaleString()} ⚡</p>
             </div>
           </motion.div>
 
-          <h1 className="font-display text-xl font-bold text-foreground mb-1 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-primary" /> Shop
-          </h1>
-          <p className="text-muted-foreground text-xs mb-6">Energy ဝယ်ယူပြီး ဂိမ်းကစားပါ</p>
-
-          {/* USD Purchases */}
-          <Section title="Buy Energy (USD)" icon={<CreditCard className="w-4 h-4 text-primary" />}>
-            <div className="grid grid-cols-2 gap-3">
-              {energyPacks.map((pack) => (
-                <PackCard
-                  key={pack.priceUSD}
-                  energy={pack.energy}
-                  price={pack.priceUSD}
-                  onClick={() => openBuy(pack, "usd")}
-                  delay={0}
-                />
-              ))}
-            </div>
+          {/* USD Section */}
+          <Section title="Buy with USD (Binance)" icon={<CreditCard className="w-4 h-4 text-primary" />}>
+            {energyPacks.map((pack, i) => (
+              <PackCard key={i} energy={pack.energy} price={pack.priceUSD} onClick={() => openBuy(pack, "usd")} delay={i * 0.05} />
+            ))}
           </Section>
 
-          {/* MMK Purchases */}
-          <Section title="Buy Energy (MMK)" icon={<Banknote className="w-4 h-4 text-accent" />}>
-            <div className="grid grid-cols-2 gap-3">
-              {energyPacks.map((pack) => (
-                <PackCard
-                  key={pack.priceMMK}
-                  energy={pack.energy}
-                  price={pack.priceMMK}
-                  accent
-                  onClick={() => openBuy(pack, "wavepay")}
-                  delay={0}
-                />
-              ))}
-            </div>
+          {/* MMK Section */}
+          <Section title="Buy with MMK (KPay / WavePay)" icon={<Banknote className="w-4 h-4 text-accent" />}>
+            {energyPacks.map((pack, i) => (
+              <PackCard key={i} energy={pack.energy} price={pack.priceMMK} accent onClick={() => openBuy(pack, "wavepay")} delay={i * 0.05} />
+            ))}
           </Section>
 
-          {/* Points → Energy */}
-          <Section title="Points → Energy" icon={<ArrowRightLeft className="w-4 h-4 text-primary" />}>
-            <div className="grid grid-cols-2 gap-3">
-              {conversions.map((conv) => (
-                <motion.button
-                  key={conv.energy}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => openConvert(conv)}
-                  className="gradient-card rounded-xl p-4 border border-border/50 hover:border-primary/40 transition-all text-left"
-                >
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Zap className="w-4 h-4 text-primary" />
-                    <span className="font-display text-sm font-bold text-foreground">+{conv.energy}</span>
-                  </div>
-                  <p className="text-muted-foreground text-[11px] font-display">{conv.pointsCost.toLocaleString()} pts</p>
-                </motion.button>
-              ))}
-            </div>
+          {/* Convert Points */}
+          <Section title="Convert Points → Energy" icon={<ArrowRightLeft className="w-4 h-4 text-primary" />}>
+            {conversions.map((conv, i) => (
+              <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="gradient-card rounded-xl p-3 border border-border/50 flex items-center justify-between"
+                onClick={() => openConvert(conv)}>
+                <div>
+                  <p className="font-display text-sm font-bold text-foreground">+{conv.energy} Energy</p>
+                  <p className="text-muted-foreground text-[10px]">{conv.pointsCost.toLocaleString()} Points</p>
+                </div>
+                <Button size="sm" variant="outline" className="font-display text-xs">Convert</Button>
+              </motion.div>
+            ))}
           </Section>
 
-          {/* Payment History - at the bottom */}
-          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
+          {/* Payment History */}
+          <div className="mt-6">
+            <div className="flex items-center gap-2 mb-3">
+              <History className="w-4 h-4 text-muted-foreground" />
+              <p className="text-xs font-display font-bold text-foreground uppercase tracking-wider">Recent Purchases</p>
+            </div>
             <PaymentHistory />
-          </Section>
+          </div>
         </div>
       </div>
 
       {/* MMK Payment Flow */}
-      <MMKPaymentFlow
-        open={mmkFlowOpen}
-        onOpenChange={setMmkFlowOpen}
-        pack={mmkFlowPack}
-        onComplete={() => setMmkFlowOpen(false)}
-      />
+      <MMKPaymentFlow open={mmkFlowOpen} onOpenChange={setMmkFlowOpen} pack={mmkPack} onComplete={() => setMmkFlowOpen(false)} />
 
       {/* USD Payment Flow */}
-      <USDPaymentFlow
-        open={usdFlowOpen}
-        onOpenChange={setUsdFlowOpen}
-        pack={usdFlowPack}
-        onComplete={() => setUsdFlowOpen(false)}
-      />
+      <USDPaymentFlow open={usdFlowOpen} onOpenChange={setUsdFlowOpen} pack={usdPack} onComplete={() => setUsdFlowOpen(false)} />
 
-      {/* Confirmation Modal (USD & Points) */}
-      <Dialog open={modal !== null} onOpenChange={(o) => !o && setModal(null)}>
-        <DialogContent className="gradient-card border-border/50 max-w-sm">
+      {/* Convert Dialog */}
+      <Dialog open={modal === "convert"} onOpenChange={(o) => !o && setModal(null)}>
+        <DialogContent className="gradient-card border-border/50 max-w-xs">
           <DialogHeader>
-            <DialogTitle className="font-display text-foreground">
-              {resultMsg ? "Result" : "Points → Energy ပြောင်းမလား?"}
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm">
-              {resultMsg ? (
-                <span className="text-base">{resultMsg}</span>
-              ) : selectedConversion ? (
-                <>
-                  <span className="text-primary font-bold">{selectedConversion.pointsCost.toLocaleString()} Points</span> သုံးပြီး{" "}
-                  <span className="text-accent font-bold">+{selectedConversion.energy} Energy</span> ရယူမလား?
-                </>
-              ) : null}
+            <DialogTitle className="font-display text-foreground">Points → Energy</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs">
+              {selectedConversion && `${selectedConversion.pointsCost.toLocaleString()} Points → +${selectedConversion.energy} Energy`}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-3 mt-2">
-            {resultMsg ? (
-              <Button className="w-full gradient-primary text-primary-foreground font-display" onClick={() => setModal(null)}>
-                OK
-              </Button>
-            ) : (
-              <>
-                <Button variant="outline" className="flex-1 font-display" onClick={() => setModal(null)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 gradient-primary text-primary-foreground font-display"
-                  onClick={handleConvert}
-                >
-                  Confirm
-                </Button>
-              </>
-            )}
-          </div>
+          {resultMsg ? (
+            <div className="text-center py-4">
+              <p className="font-display text-sm text-foreground">{resultMsg}</p>
+              <Button className="mt-3 font-display text-xs" variant="outline" onClick={() => setModal(null)}>Close</Button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 font-display text-xs" onClick={() => setModal(null)}>Cancel</Button>
+              <Button className="flex-1 gradient-primary text-primary-foreground font-display text-xs" onClick={handleConvert}>Convert</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
+
+      <Navbar />
     </div>
   );
 };
 
-/* ─── Sub-components ─── */
-
 function Section({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-      <h2 className="font-display text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-        {icon} {title}
-      </h2>
-      {children}
-    </motion.section>
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        {icon}
+        <p className="text-xs font-display font-bold text-foreground uppercase tracking-wider">{title}</p>
+      </div>
+      <div className="space-y-2">{children}</div>
+    </div>
   );
 }
 
-function PackCard({
-  energy,
-  price,
-  accent,
-  onClick,
-  delay,
-}: {
-  energy: number;
-  price: string;
-  accent?: boolean;
-  onClick: () => void;
-  delay: number;
+function PackCard({ energy, price, accent, onClick, delay }: {
+  energy: number; price: string; accent?: boolean; onClick: () => void; delay: number;
 }) {
   return (
-    <motion.button
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      className={`gradient-card rounded-xl p-4 border transition-all text-left ${
-        accent ? "border-accent/30 hover:border-accent/60" : "border-border/50 hover:border-primary/40"
-      }`}
-    >
-      <div className="flex items-center gap-1.5 mb-2">
+    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay }}
+      className="gradient-card rounded-xl p-3 border border-border/50 flex items-center justify-between cursor-pointer hover:border-primary/30 transition-all"
+      onClick={onClick}>
+      <div className="flex items-center gap-2">
         <Zap className={`w-4 h-4 ${accent ? "text-accent" : "text-primary"}`} />
-        <span className="font-display text-sm font-bold text-foreground">+{energy.toLocaleString()}</span>
+        <span className="font-display text-sm font-bold text-foreground">+{energy.toLocaleString()} Energy</span>
       </div>
-      <p className={`text-xs font-display font-bold ${accent ? "text-accent" : "text-primary"}`}>{price}</p>
-    </motion.button>
+      <span className={`font-display text-sm font-bold ${accent ? "text-accent" : "text-primary"}`}>{price}</span>
+    </motion.div>
   );
 }
 

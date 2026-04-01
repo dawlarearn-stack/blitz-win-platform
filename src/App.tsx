@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useHeartbeat } from "@/hooks/useHeartbeat";
 import Index from "./pages/Index";
 import Games from "./pages/Games";
 import Dashboard from "./pages/Dashboard";
@@ -23,31 +24,39 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function AppInner() {
+  useHeartbeat(60_000); // Send heartbeat every 60 seconds
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/games" element={<Games />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/shop" element={<Shop />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/games/bomb-finder" element={<BombFinder />} />
+      <Route path="/games/memory-match" element={<MemoryMatch />} />
+      <Route path="/games/reaction-tap" element={<ReactionTap />} />
+      <Route path="/games/lucky-box" element={<LuckyBox />} />
+      <Route path="/games/color-match" element={<ColorMatch />} />
+      <Route path="/games/speed-type" element={<SpeedType />} />
+      <Route path="/games/pattern-memory" element={<PatternMemory />} />
+      <Route path="/games/number-sequence" element={<NumberSequence />} />
+      <Route path="/games/dice-roll" element={<DiceRoll />} />
+      <Route path="/games/whack-a-mole" element={<WhackAMole />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/games" element={<Games />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/games/bomb-finder" element={<BombFinder />} />
-          <Route path="/games/memory-match" element={<MemoryMatch />} />
-          <Route path="/games/reaction-tap" element={<ReactionTap />} />
-          <Route path="/games/lucky-box" element={<LuckyBox />} />
-          <Route path="/games/color-match" element={<ColorMatch />} />
-          <Route path="/games/speed-type" element={<SpeedType />} />
-          <Route path="/games/pattern-memory" element={<PatternMemory />} />
-          <Route path="/games/number-sequence" element={<NumberSequence />} />
-          <Route path="/games/dice-roll" element={<DiceRoll />} />
-          <Route path="/games/whack-a-mole" element={<WhackAMole />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AppInner />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
