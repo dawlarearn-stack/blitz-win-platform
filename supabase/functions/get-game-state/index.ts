@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
     if (!state) {
       const { data: newState, error } = await supabase
         .from("user_game_state")
-        .upsert({ telegram_id }, { onConflict: "telegram_id" })
+        .upsert({ telegram_id, energy: 1000 }, { onConflict: "telegram_id" })
         .select("*")
         .single();
 
