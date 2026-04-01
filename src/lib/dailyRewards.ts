@@ -91,11 +91,11 @@ function load(): DailyData {
       const data = { ...defaults, ...parsed };
       // Reset daily tasks if new day
       if (data.resetDate !== today()) {
-        // Keep checkin streak logic but reset daily tasks
         data.levelTasksClaimed = [];
         data.adProgress = {};
         data.adClaimed = [];
         data.adLastWatch = {};
+        data.freeEnergyClaimed = false;
         data.resetDate = today();
       }
       return data;
