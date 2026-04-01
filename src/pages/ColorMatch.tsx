@@ -70,14 +70,15 @@ const ColorMatch = () => {
     setTimeLeft(getTimePerRound(level));
   }, [level]);
 
-  const startGame = useCallback(() => {
-    if (!spendEnergy(1)) return;
+  const startGame = useCallback(async () => {
+    const ok = await startLevel("color-match", level);
+    if (!ok) return;
     setGameState("playing");
     setRound(0);
     setCorrect(0);
     setEarnedPoints(0);
     generateRound();
-  }, [generateRound]);
+  }, [generateRound, startLevel, level]);
 
   useEffect(() => {
     if (gameState !== "playing") return;
