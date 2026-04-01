@@ -119,6 +119,7 @@ const BombFinder = () => {
         playGameOver();
       }, 300);
       setGameState("lost");
+      completeLevel("bomb-finder", level, false);
     } else {
       playClickSafe();
       spawnParticles(cell.id);
@@ -128,8 +129,7 @@ const BombFinder = () => {
       if (newSafe >= config.safeTarget) {
         const pts = getPointsForLevel(level);
         setEarnedPoints(pts);
-        addPoints(pts);
-        updateProgress("bomb-finder", level);
+        completeLevel("bomb-finder", level, true);
         setGameState("won");
         playLevelWin();
       }
