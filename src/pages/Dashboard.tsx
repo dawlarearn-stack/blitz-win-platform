@@ -1,19 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clock, ChevronDown, ChevronUp, User, AtSign } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
 import WithdrawFlow from "@/components/WithdrawFlow";
 import WithdrawalHistory from "@/components/WithdrawalHistory";
-
-// Demo referrals for UI preview (remove when backend is live)
-const DEMO_REFERRALS: Referral[] = [
-  { id: "r1", username: "CyberNinja", gamesPlayed: 50, joinedAt: Date.now() - 4 * 86400000, claimed: false },
-  { id: "r2", username: "NeonKing", gamesPlayed: 32, joinedAt: Date.now() - 2 * 86400000, claimed: false },
-  { id: "r3", username: "PixelHero", gamesPlayed: 50, joinedAt: Date.now() - 5 * 86400000, claimed: true },
-  { id: "r4", username: "StarGamer", gamesPlayed: 12, joinedAt: Date.now() - 1 * 86400000, claimed: false },
-];
+import { getTelegramUser } from "@/lib/fingerprint";
 
 function getReferralStatus(r: Referral): "completed" | "pending" {
   const daysSince = (Date.now() - r.joinedAt) / (1000 * 60 * 60 * 24);
