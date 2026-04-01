@@ -94,8 +94,8 @@ const Admin = () => {
   const handleAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const url = `https://${projectId}.supabase.co/functions/v1/admin-payments`;
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const url = `${baseUrl}/functions/v1/admin-payments`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
