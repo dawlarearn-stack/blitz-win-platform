@@ -1,19 +1,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Coins, Gamepad2, Trophy, DollarSign, Zap, Users, Copy, Check, Gift, Clock, ChevronDown, ChevronUp, User, AtSign } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
 import WithdrawFlow from "@/components/WithdrawFlow";
 import WithdrawalHistory from "@/components/WithdrawalHistory";
-
-// Demo referrals for UI preview (remove when backend is live)
-const DEMO_REFERRALS: Referral[] = [
-  { id: "r1", username: "CyberNinja", gamesPlayed: 50, joinedAt: Date.now() - 4 * 86400000, claimed: false },
-  { id: "r2", username: "NeonKing", gamesPlayed: 32, joinedAt: Date.now() - 2 * 86400000, claimed: false },
-  { id: "r3", username: "PixelHero", gamesPlayed: 50, joinedAt: Date.now() - 5 * 86400000, claimed: true },
-  { id: "r4", username: "StarGamer", gamesPlayed: 12, joinedAt: Date.now() - 1 * 86400000, claimed: false },
-];
+import { getTelegramUser } from "@/lib/fingerprint";
 
 function getReferralStatus(r: Referral): "completed" | "pending" {
   const daysSince = (Date.now() - r.joinedAt) / (1000 * 60 * 60 * 24);
@@ -27,6 +20,7 @@ function getDaysRemaining(r: Referral): number {
 
 const Dashboard = () => {
   const { data, claimReferral, spendPoints } = useGameStore();
+  const telegramUser = getTelegramUser();
   const dollarValue = getPointsDollarValue(data.points);
   const canWithdraw = parseFloat(dollarValue) >= 5;
   const [copied, setCopied] = useState(false);
@@ -34,8 +28,7 @@ const Dashboard = () => {
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
-  // Use demo referrals if no real ones exist
-  const referrals = data.referrals.length > 0 ? data.referrals : DEMO_REFERRALS;
+  const referrals = data.referrals;
   const referralLink = `https://t.me/PGRmm_bot?start=${data.referralCode}`;
 
   const handleCopy = async () => {
@@ -82,7 +75,36 @@ const Dashboard = () => {
       <div className="pt-20 md:pt-24 pb-20 px-4">
         <div className="container max-w-3xl">
           <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground mb-8 text-sm">Track your earnings and game progress.</p>
+          <p className="text-muted-foreground mb-4 text-sm">Track your earnings and game progress.</p>
+
+          {/* Telegram User Info */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="gradient-card rounded-2xl p-4 border border-primary/20 mb-6"
+            style={{ boxShadow: "0 0 20px hsl(var(--primary) / 0.1)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "hsl(var(--primary) / 0.15)" }}>
+                <User className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-sm font-bold text-foreground truncate">
+                  {telegramUser.firstName || telegramUser.username || "Player"}
+                </p>
+                {telegramUser.username && (
+                  <div className="flex items-center gap-1">
+                    <AtSign className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">{telegramUser.username}</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">User ID</p>
+                <p className="font-display text-xs font-bold text-primary">{telegramUser.id}</p>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">

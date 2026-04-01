@@ -58,6 +58,22 @@ export function generateFingerprint(): string {
   return "fp-" + Math.abs(hash).toString(36);
 }
 
+// Get Telegram user info
+export function getTelegramUser(): { id: string; username: string | null; firstName: string | null } {
+  try {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user) {
+      const u = tg.initDataUnsafe.user;
+      return {
+        id: String(u.id),
+        username: u.username || null,
+        firstName: u.first_name || null,
+      };
+    }
+  } catch {}
+  return { id: getTelegramId(), username: null, firstName: null };
+}
+
 // Get telegram ID from Telegram WebApp
 export function getTelegramId(): string {
   try {
