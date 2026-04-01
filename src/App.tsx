@@ -35,6 +35,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/games/bomb-finder" element={<BombFinder />} />
           <Route path="/games/memory-match" element={<MemoryMatch />} />
           <Route path="/games/reaction-tap" element={<ReactionTap />} />
