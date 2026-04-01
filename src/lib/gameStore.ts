@@ -48,6 +48,7 @@ export function useGameStore() {
   const [data, setData] = useState<UserData>(defaultData);
   const [loading, setLoading] = useState(true);
   const [activeSession, setActiveSession] = useState<string | null>(null);
+  const [startingLevel, setStartingLevel] = useState(false);
   const telegramId = useRef(getTelegramId());
 
   // Load state from server on mount
@@ -107,6 +108,8 @@ export function useGameStore() {
 
   // Server API: start a level (deducts energy server-side)
   const startLevel = useCallback(async (gameId: string, level: number): Promise<boolean> => {
+    if (startingLevel) return false; // prevent double-click
+    setStartingLevel(true);
     try {
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -148,8 +151,10 @@ export function useGameStore() {
       console.error("startLevel error:", err);
       toast.error("Server error. ထပ်ကြိုးစားပါ");
       return false;
+    } finally {
+      setStartingLevel(false);
     }
-  }, []);
+  }, [startingLevel]);
 
   // Server API: complete a level (awards points server-side)
   const completeLevel = useCallback(async (gameId: string, level: number, won: boolean): Promise<number> => {
@@ -280,6 +285,7 @@ export function useGameStore() {
   return {
     data,
     loading,
+    startingLevel,
     addPoints,
     addEnergy,
     spendPoints,
