@@ -189,7 +189,7 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     });
   }, [daily]);
 
-  const claimAdReward = useCallback((taskId: string) => {
+  const claimAdReward = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
     if (!task || daily.adClaimed.includes(taskId)) return;
     const progress = daily.adProgress[taskId] || 0;
