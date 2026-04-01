@@ -125,6 +125,7 @@ const MemoryMatch = () => {
             if (newMoves >= maxMoves) {
               playGameOver();
               setGameState("lost");
+              completeLevel("memory-match", level, false);
             }
           }, 800);
         }
