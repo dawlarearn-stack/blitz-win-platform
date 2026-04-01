@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Smartphone } from "lucide-react";
+import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote } from "lucide-react";
+import MMKPaymentFlow from "@/components/MMKPaymentFlow";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import {
@@ -45,8 +46,15 @@ const Shop = () => {
   const [selectedPack, setSelectedPack] = useState<EnergyPack | null>(null);
   const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
+  const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
+  const [mmkFlowPack, setMmkFlowPack] = useState<EnergyPack | null>(null);
 
   const openBuy = (pack: EnergyPack, type: "usd" | "wavepay") => {
+    if (type === "wavepay") {
+      setMmkFlowPack(pack);
+      setMmkFlowOpen(true);
+      return;
+    }
     setSelectedPack(pack);
     setSelectedConversion(null);
     setResultMsg(null);
@@ -131,8 +139,8 @@ const Shop = () => {
             </div>
           </Section>
 
-          {/* WavePay */}
-          <Section title="WavePay (MMK)" icon={<Smartphone className="w-4 h-4 text-accent" />}>
+          {/* MMK Purchases */}
+          <Section title="Buy Energy (MMK)" icon={<Banknote className="w-4 h-4 text-accent" />}>
             <div className="grid grid-cols-2 gap-3">
               {energyPacks.map((pack) => (
                 <PackCard
@@ -170,7 +178,15 @@ const Shop = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* MMK Payment Flow */}
+      <MMKPaymentFlow
+        open={mmkFlowOpen}
+        onOpenChange={setMmkFlowOpen}
+        pack={mmkFlowPack}
+        onComplete={() => setMmkFlowOpen(false)}
+      />
+
+      {/* Confirmation Modal (USD & Points) */}
       <Dialog open={modal !== null} onOpenChange={(o) => !o && setModal(null)}>
         <DialogContent className="gradient-card border-border/50 max-w-sm">
           <DialogHeader>
