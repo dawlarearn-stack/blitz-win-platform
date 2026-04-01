@@ -131,9 +131,11 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     return 1;
   }, [daily]);
 
-  const claimCheckin = useCallback(() => {
+  const claimCheckin = useCallback(async () => {
     const nextDay = getNextCheckinDay();
     if (nextDay < 1) return;
+    const adWatched = await showRewardAd();
+    if (!adWatched) return;
     const reward = CHECKIN_REWARDS[nextDay - 1];
     addPoints(reward.points);
     addEnergy(reward.energy);
