@@ -340,7 +340,7 @@ export default function USDPaymentFlow({ open, onOpenChange, pack, onComplete }:
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-display">Transaction Screenshot</Label>
+                <Label className="text-xs text-muted-foreground font-display">Transaction Screenshot <span className="text-destructive">*</span></Label>
                 <input
                   ref={fileInputRef}
                   type="file"
