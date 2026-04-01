@@ -1,0 +1,1 @@
+ALTER TABLE public.user_game_state ALTER COLUMN energy SET DEFAULT 1000;
