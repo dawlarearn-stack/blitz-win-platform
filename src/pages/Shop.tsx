@@ -40,7 +40,7 @@ const conversions: ConversionOption[] = [
   { energy: 500, pointsCost: 24000 },
 ];
 
-type ModalType = "usd" | "wavepay" | "convert" | null;
+type ModalType = "convert" | null;
 
 const Shop = () => {
   const { data, addEnergy, spendPoints } = useGameStore();
