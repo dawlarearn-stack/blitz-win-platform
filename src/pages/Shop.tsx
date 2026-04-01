@@ -67,7 +67,6 @@ const Shop = () => {
 
   const openConvert = (conv: ConversionOption) => {
     setSelectedConversion(conv);
-    setSelectedPack(null);
     setResultMsg(null);
     setModal("convert");
   };
