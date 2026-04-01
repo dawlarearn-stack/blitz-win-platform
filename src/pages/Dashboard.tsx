@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
 import WithdrawFlow from "@/components/WithdrawFlow";
+import WithdrawalHistory from "@/components/WithdrawalHistory";
 
 // Demo referrals for UI preview (remove when backend is live)
 const DEMO_REFERRALS: Referral[] = [
