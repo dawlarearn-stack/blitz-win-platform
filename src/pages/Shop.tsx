@@ -160,11 +160,6 @@ const Shop = () => {
             </div>
           </Section>
 
-          {/* Payment History */}
-          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
-            <PaymentHistory />
-          </Section>
-
           {/* Points → Energy */}
           <Section title="Points → Energy" icon={<ArrowRightLeft className="w-4 h-4 text-primary" />}>
             <div className="grid grid-cols-2 gap-3">
@@ -185,6 +180,11 @@ const Shop = () => {
               ))}
             </div>
           </Section>
+
+          {/* Payment History - at the bottom */}
+          <Section title="Payment History" icon={<History className="w-4 h-4 text-primary" />}>
+            <PaymentHistory />
+          </Section>
         </div>
       </div>
 
@@ -194,6 +194,14 @@ const Shop = () => {
         onOpenChange={setMmkFlowOpen}
         pack={mmkFlowPack}
         onComplete={() => setMmkFlowOpen(false)}
+      />
+
+      {/* USD Payment Flow */}
+      <USDPaymentFlow
+        open={usdFlowOpen}
+        onOpenChange={setUsdFlowOpen}
+        pack={usdFlowPack}
+        onComplete={() => setUsdFlowOpen(false)}
       />
 
       {/* Confirmation Modal (USD & Points) */}
