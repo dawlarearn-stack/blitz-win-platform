@@ -314,6 +314,7 @@ const Admin = () => {
             <StatsCard icon={<Activity className="w-4 h-4" />} label="Online Now" value={stats.activeUsers} color="text-green-500" pulse />
             <StatsCard icon={<Zap className="w-4 h-4" />} label="Pending Payments" value={stats.pendingPayments} color="text-yellow-500" />
             <StatsCard icon={<Wallet className="w-4 h-4" />} label="Pending Withdrawals" value={stats.pendingWithdrawals} color="text-accent" />
+            <StatsCard icon={<AlertTriangle className="w-4 h-4" />} label="Suspicious" value={stats.suspiciousCount} color="text-destructive" />
           </motion.div>
 
           {/* Tab switcher */}
