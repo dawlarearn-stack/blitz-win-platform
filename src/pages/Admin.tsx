@@ -334,10 +334,65 @@ const Admin = () => {
               onClick={() => setTab("config")}>
               <Settings className="w-3 h-3" /> Pricing
             </Button>
+            <Button variant={tab === "security" ? "default" : "outline"} size="sm"
+              className={`font-display text-xs ${tab === "security" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => setTab("security")}>
+              <AlertTriangle className="w-3 h-3" /> Security
+            </Button>
           </div>
 
-          {/* Config Tab */}
-          {tab === "config" ? (
+          {/* Security Tab */}
+          {tab === "security" ? (
+            <ScrollArea className="h-[calc(100vh-380px)]">
+              {loading ? (
+                <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
+              ) : suspiciousLogs.length === 0 ? (
+                <div className="text-center py-10">
+                  <Shield className="w-10 h-10 text-primary mx-auto mb-2 opacity-50" />
+                  <p className="text-muted-foreground text-sm font-display">No suspicious activity</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {suspiciousLogs.map((log) => (
+                    <motion.div key={log.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                      className="gradient-card rounded-xl p-4 border border-border/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant="destructive" className="text-[10px] font-display">
+                          {log.action_type.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
+                        <span className="text-muted-foreground text-[10px]">
+                          {new Date(log.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Telegram ID</span>
+                          <span className="text-foreground font-bold">{log.telegram_id}</span>
+                        </div>
+                        {log.ip_address && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">IP</span>
+                            <span className="text-foreground">{log.ip_address}</span>
+                          </div>
+                        )}
+                        {log.device_info && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Device</span>
+                            <span className="text-foreground text-[10px] max-w-[200px] truncate">{log.device_info}</span>
+                          </div>
+                        )}
+                        {log.details && Object.keys(log.details).length > 0 && (
+                          <div className="mt-2 p-2 rounded-lg bg-secondary/50 text-[10px] text-muted-foreground font-mono break-all">
+                            {JSON.stringify(log.details, null, 2)}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          ) : tab === "config" ? (
             <ConfigPanel
               energyPacks={energyPacks}
               conversions={conversions}
