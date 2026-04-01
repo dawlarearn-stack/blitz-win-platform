@@ -75,6 +75,7 @@ const SpeedType = () => {
           clearInterval(timerRef.current);
           playGameOver();
           setGameState("lost");
+          completeLevel("speed-type", level, false);
           return 0;
         }
         return t - 1;
