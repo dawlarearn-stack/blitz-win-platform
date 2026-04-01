@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import type { Referral } from "@/lib/gameStore";
 import WithdrawFlow from "@/components/WithdrawFlow";
+import WithdrawalHistory from "@/components/WithdrawalHistory";
 
 // Demo referrals for UI preview (remove when backend is live)
 const DEMO_REFERRALS: Referral[] = [
@@ -35,7 +36,7 @@ const Dashboard = () => {
 
   // Use demo referrals if no real ones exist
   const referrals = data.referrals.length > 0 ? data.referrals : DEMO_REFERRALS;
-  const referralLink = `https://t.me/PGRGameBot?start=${data.referralCode}`;
+  const referralLink = `https://t.me/PGRmm_bot?start=${data.referralCode}`;
 
   const handleCopy = async () => {
     try {
@@ -131,6 +132,11 @@ const Dashboard = () => {
             dollarValue={dollarValue}
             onComplete={(pts) => spendPoints(pts)}
           />
+
+          {/* Withdrawal History */}
+          <div className="mb-6">
+            <WithdrawalHistory />
+          </div>
 
           {/* Referrals & Rewards */}
           <motion.div
