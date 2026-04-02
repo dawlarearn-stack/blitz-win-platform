@@ -65,17 +65,14 @@ async function ensureMonetagSdk(timeoutMs = 4000): Promise<boolean> {
 
 /* ─── Interstitial (In-App) ─── */
 
-let nextLevelCounter = 0;
-const INTERSTITIAL_INTERVAL = 3;
-
 /**
- * Track a "Next Level" click.  Shows a Monetag interstitial every 3 clicks.
+ * Show a Monetag rewarded interstitial after every 3 levels cleared.
+ * Pass the 0-indexed level that was just completed.
+ * Ad triggers after level 2, 5, 8, 11… (i.e. every 3rd completion).
  */
-export async function trackNextLevel(): Promise<void> {
-  nextLevelCounter += 1;
-  if (nextLevelCounter >= INTERSTITIAL_INTERVAL) {
-    const shown = await showInterstitial();
-    nextLevelCounter = shown ? 0 : INTERSTITIAL_INTERVAL - 1;
+export async function trackNextLevel(completedLevel: number): Promise<void> {
+  if ((completedLevel + 1) % 3 === 0) {
+    await showInterstitial();
   }
 }
 
