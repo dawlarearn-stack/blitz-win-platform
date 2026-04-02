@@ -243,7 +243,9 @@ const Shop = () => {
           ) : (
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 font-display text-xs" onClick={() => setModal(null)}>Cancel</Button>
-              <Button className="flex-1 gradient-primary text-primary-foreground font-display text-xs" onClick={handleConvert}>Convert</Button>
+              <Button className="flex-1 gradient-primary text-primary-foreground font-display text-xs" onClick={handleConvert} disabled={converting}>
+                {converting ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Converting...</> : "Convert"}
+              </Button>
             </div>
           )}
         </DialogContent>
