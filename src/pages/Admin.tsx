@@ -174,10 +174,39 @@ const Admin = () => {
         headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
       });
       const result = await resp.json();
-      if (resp.ok && result.data) setSuspiciousLogs(result.data);
+      if (resp.ok) {
+        if (result.data) setSuspiciousLogs(result.data);
+        if (result.banned) {
+          const banMap: Record<string, { reason: string; unbanned_at: string | null }> = {};
+          for (const b of result.banned) {
+            banMap[b.telegram_id] = { reason: b.reason, unbanned_at: b.unbanned_at };
+          }
+          setBannedUsers(banMap);
+        }
+        if (result.firstAccounts) setFirstAccounts(result.firstAccounts);
+      }
     } catch {}
     setLoading(false);
   }, [adminKey, baseUrl, anonKey]);
+
+  const handleBanAction = async (telegramId: string, action: "ban" | "unban") => {
+    setBanLoading(telegramId);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action, telegram_id: telegramId, reason: "Banned from admin dashboard" }),
+      });
+      const result = await resp.json();
+      if (result.error) throw new Error(result.error);
+      toast.success(action === "ban" ? "🚫 Banned!" : "✅ Unbanned!");
+      fetchSuspicious();
+    } catch {
+      toast.error("Action failed");
+    } finally {
+      setBanLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (adminKey) {
