@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MIN_COMPLETION_SECONDS = 3;
+const MIN_COMPLETION_SECONDS = 1.99;
 
 // Points per level tier (must match frontend display only — server is source of truth)
 function getPointsForLevel(level: number): number {
