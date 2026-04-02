@@ -96,6 +96,9 @@ const Admin = () => {
   // Stats
   const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0 });
   const [suspiciousLogs, setSuspiciousLogs] = useState<SuspiciousLog[]>([]);
+  const [bannedUsers, setBannedUsers] = useState<Record<string, { reason: string; unbanned_at: string | null }>>({});
+  const [firstAccounts, setFirstAccounts] = useState<Record<string, string>>({});
+  const [banLoading, setBanLoading] = useState<string | null>(null);
 
   // Config
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
