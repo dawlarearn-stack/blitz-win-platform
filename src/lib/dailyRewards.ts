@@ -51,7 +51,7 @@ export const AD_TASKS: AdTask[] = [
 ];
 
 export const DAILY_FREE_ENERGY = 1000;
-export const REQUIRED_AD_TASKS_FOR_FREE_ENERGY = ["ad1", "ad2", "ad3"];
+export const REQUIRED_AD_TASKS_FOR_FREE_ENERGY = ["ad1", "ad2", "ad3", "ad4"];
 
 export interface DailyData {
   lastCheckinDate: string; // YYYY-MM-DD

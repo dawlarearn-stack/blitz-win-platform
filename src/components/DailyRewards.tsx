@@ -271,7 +271,7 @@ function DailyAdWatch({
                 Daily Free Energy
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Complete Ad Bonus 1, 2, 3 to unlock
+                Complete Ad Bonus 1, 2, 3, 4 to unlock
               </p>
             </div>
           </div>
