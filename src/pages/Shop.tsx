@@ -102,14 +102,57 @@ const Shop = () => {
     setModal("convert");
   };
 
-  const handleConvert = () => {
-    if (!selectedConversion) return;
-    const ok = spendPoints(selectedConversion.pointsCost);
-    if (ok) {
-      addEnergy(selectedConversion.energy);
+  const handleConvert = async () => {
+    if (!selectedConversion || converting) return;
+    setConverting(true);
+    try {
+      // Show Monetag rewarded ad first
+      const adWatched = await showMonetangRewardAd();
+      if (!adWatched) {
+        setResultMsg("❌ Ad ကိုကြည့်ပြီးမှ Convert လုပ်လို့ရပါမည်");
+        setConverting(false);
+        return;
+      }
+
+      // Server-side conversion
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const telegramId = getTelegramId();
+      
+      const resp = await fetch(`${baseUrl}/functions/v1/convert-points`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${anonKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          telegram_id: telegramId,
+          points_cost: selectedConversion.pointsCost,
+          energy_amount: selectedConversion.energy,
+        }),
+      });
+      const result = await resp.json();
+
+      if (!resp.ok) {
+        if (result.error?.includes("Insufficient")) {
+          setResultMsg("❌ Points မလုံလောက်ပါ");
+        } else {
+          setResultMsg(`❌ ${result.error || "Convert မအောင်မြင်ပါ"}`);
+        }
+        return;
+      }
+
+      // Update local state with server values
+      setData(prev => ({
+        ...prev,
+        points: result.points,
+        energy: result.energy,
+      }));
       setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
-    } else {
-      setResultMsg("❌ Points မလုံလောက်ပါ");
+    } catch (err) {
+      setResultMsg("❌ Server error. ထပ်ကြိုးစားပါ");
+    } finally {
+      setConverting(false);
     }
   };
 
