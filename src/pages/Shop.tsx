@@ -50,7 +50,7 @@ type ModalType = "convert" | null;
 const Shop = () => {
   const { data, addEnergy, spendPoints } = useGameStore();
   const [modal, setModal] = useState<ModalType>(null);
-  const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
+  const [converting, setConverting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
   const [mmkPack, setMmkPack] = useState<{ energy: number; priceMMK: string } | null>(null);
