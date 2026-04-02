@@ -131,12 +131,12 @@ const Admin = () => {
   
   const getEndpoint = (name: string) => {
     if (import.meta.env.VITE_API_MODE === "selfhost") return `${baseUrl}/api/${name}`;
-    return getEndpoint("${name}");
+    return `${baseUrl}/functions/v1/${name}`;
   };
   
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (): Record<string, string> => {
     if (import.meta.env.VITE_API_MODE === "selfhost") return {};
-    return { ...getAuthHeaders() };
+    return { Authorization: `Bearer ${anonKey}` };
   };
 
   const fetchStats = useCallback(async () => {
