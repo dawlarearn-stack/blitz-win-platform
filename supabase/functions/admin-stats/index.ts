@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       }
 
       // Default: return stats
-      const [totalUsersRes, activeUsersRes, pendingPaymentsRes, pendingWithdrawalsRes, suspiciousRes] = await Promise.all([
+      const [totalUsersRes, activeUsersRes, pendingPaymentsRes, pendingWithdrawalsRes, suspiciousRes, totalPointsRes] = await Promise.all([
         supabase.from("bot_users").select("id", { count: "exact", head: true }),
         supabase.from("user_heartbeats").select("telegram_id", { count: "exact", head: true })
           .gte("last_seen_at", new Date(Date.now() - 5 * 60 * 1000).toISOString()),
@@ -101,7 +101,10 @@ Deno.serve(async (req) => {
         supabase.from("withdrawal_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("suspicious_activity").select("id", { count: "exact", head: true })
           .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from("user_game_state").select("points"),
       ]);
+
+      const totalPoints = (totalPointsRes.data || []).reduce((sum: number, r: any) => sum + (r.points || 0), 0);
 
       return new Response(JSON.stringify({
         totalUsers: totalUsersRes.count ?? 0,
@@ -109,6 +112,7 @@ Deno.serve(async (req) => {
         pendingPayments: pendingPaymentsRes.count ?? 0,
         pendingWithdrawals: pendingWithdrawalsRes.count ?? 0,
         suspiciousCount: suspiciousRes.count ?? 0,
+        totalPoints,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
