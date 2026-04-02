@@ -5,7 +5,7 @@ import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
 import WeeklyInviteLeaderboard from "@/components/WeeklyInviteLeaderboard";
 import { checkAndDistributeRewards } from "@/lib/weeklyLeaderboard";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchLeaderboard } from "@/lib/api";
 
 interface LeaderboardPlayer {
   rank: number;
