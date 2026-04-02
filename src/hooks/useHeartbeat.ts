@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { getTelegramId } from "@/lib/fingerprint";
+import { sendHeartbeat } from "@/lib/api";
 
 export function useHeartbeat(intervalMs = 60_000) {
   const sentRef = useRef(false);
@@ -11,15 +11,12 @@ export function useHeartbeat(intervalMs = 60_000) {
 
     const send = async () => {
       try {
-        await supabase.functions.invoke("heartbeat", {
-          body: { telegram_id: telegramId },
-        });
+        await sendHeartbeat(telegramId);
       } catch (err) {
         console.error("Heartbeat failed:", err);
       }
     };
 
-    // Send immediately on mount
     if (!sentRef.current) {
       sentRef.current = true;
       send();

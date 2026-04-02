@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { History, CheckCircle, XCircle, Clock, Zap, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle, XCircle, Clock, Zap, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { fetchPaymentHistory } from "@/lib/api";
 
 interface PaymentRecord {
   id: string;
@@ -39,15 +38,8 @@ export default function PaymentHistory() {
 
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const resp = await fetch(
-        `${baseUrl}/functions/v1/check-payment?telegram_id=${telegramId}&all=true`,
-        { headers: { "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
-      );
-      const json = await resp.json();
-      if (json.data) {
-        setRecords(Array.isArray(json.data) ? json.data : [json.data]);
-      }
+      const data = await fetchPaymentHistory(telegramId);
+      setRecords(data);
     } catch (err) {
       console.error("Failed to fetch payment history:", err);
     } finally {
