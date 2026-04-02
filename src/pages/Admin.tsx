@@ -865,11 +865,13 @@ function StatsCard({ icon, label, value, color, pulse }: {
 }
 
 // Config Panel Component
-function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions, onSave, loading }: {
+function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions, adsgramBlockId, setAdsgramBlockId, onSave, loading }: {
   energyPacks: EnergyPack[];
   conversions: ConversionOption[];
   setEnergyPacks: (v: EnergyPack[]) => void;
   setConversions: (v: ConversionOption[]) => void;
+  adsgramBlockId: number;
+  setAdsgramBlockId: (v: number) => void;
   onSave: (key: string, value: any) => Promise<void>;
   loading: boolean;
 }) {
@@ -897,6 +899,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
     setSaving(true);
     await onSave("energy_packs", energyPacks);
     await onSave("point_conversions", conversions);
+    await onSave("adsgram_block_id", adsgramBlockId);
     setSaving(false);
   };
 
