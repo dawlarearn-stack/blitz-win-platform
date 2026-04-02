@@ -15,6 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { adminGet, adminPost } from "@/lib/api";
 
 const ADMIN_KEY_STORAGE = "pgr_admin_key";
 
