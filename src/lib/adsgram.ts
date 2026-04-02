@@ -6,7 +6,7 @@
 declare global {
   interface Window {
     Adsgram?: {
-      init: (config: { blockId: string }) => AdController;
+      init: (config: { blockId: number }) => AdController;
     };
   }
 }
