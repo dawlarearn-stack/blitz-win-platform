@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import {
   Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
   Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft, AlertTriangle, Ban, ShieldCheck,
+  Megaphone, Send, Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -65,6 +67,7 @@ interface AdminStats {
   pendingPayments: number;
   pendingWithdrawals: number;
   suspiciousCount: number;
+  totalPoints: number;
 }
 
 interface SuspiciousLog {
@@ -77,8 +80,15 @@ interface SuspiciousLog {
   created_at: string;
 }
 
+interface BannedUser {
+  telegram_id: string;
+  reason: string | null;
+  banned_at: string;
+  unbanned_at: string | null;
+}
+
 type StatusFilter = "pending" | "approved" | "rejected";
-type TabType = "payments" | "withdrawals" | "config" | "security";
+type TabType = "payments" | "withdrawals" | "config" | "security" | "banned" | "announce";
 
 const Admin = () => {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || "");
@@ -94,9 +104,10 @@ const Admin = () => {
   const [actionLoading, setActionLoading] = useState(false);
 
   // Stats
-  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0 });
+  const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0, totalPoints: 0 });
   const [suspiciousLogs, setSuspiciousLogs] = useState<SuspiciousLog[]>([]);
   const [bannedUsers, setBannedUsers] = useState<Record<string, { reason: string; unbanned_at: string | null }>>({});
+  const [bannedList, setBannedList] = useState<BannedUser[]>([]);
   const [firstAccounts, setFirstAccounts] = useState<Record<string, string>>({});
   const [banLoading, setBanLoading] = useState<string | null>(null);
 
@@ -104,6 +115,12 @@ const Admin = () => {
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
   const [conversions, setConversions] = useState<ConversionOption[]>([]);
   const [configLoading, setConfigLoading] = useState(false);
+
+  // Announcement
+  const [announceTarget, setAnnounceTarget] = useState<"all" | "single">("all");
+  const [announceTelegramId, setAnnounceTelegramId] = useState("");
+  const [announceMessage, setAnnounceMessage] = useState("");
+  const [announceSending, setAnnounceSending] = useState(false);
 
   const baseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -138,7 +155,7 @@ const Admin = () => {
   }, [adminKey, baseUrl, anonKey]);
 
   const fetchData = useCallback(async () => {
-    if (!adminKey || tab === "config" || tab === "security") return;
+    if (!adminKey || tab === "config" || tab === "security" || tab === "banned" || tab === "announce") return;
     setLoading(true);
     try {
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
@@ -189,6 +206,21 @@ const Admin = () => {
     setLoading(false);
   }, [adminKey, baseUrl, anonKey]);
 
+  const fetchBanned = useCallback(async () => {
+    if (!adminKey) return;
+    setLoading(true);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=banned`, {
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const result = await resp.json();
+      if (resp.ok && result.data) {
+        setBannedList(result.data);
+      }
+    } catch {}
+    setLoading(false);
+  }, [adminKey, baseUrl, anonKey]);
+
   const handleBanAction = async (telegramId: string, action: "ban" | "unban") => {
     setBanLoading(telegramId);
     try {
@@ -200,11 +232,43 @@ const Admin = () => {
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
       toast.success(action === "ban" ? "🚫 Banned!" : "✅ Unbanned!");
-      fetchSuspicious();
+      if (tab === "security") fetchSuspicious();
+      if (tab === "banned") fetchBanned();
     } catch {
       toast.error("Action failed");
     } finally {
       setBanLoading(null);
+    }
+  };
+
+  const handleAnnounce = async () => {
+    if (!announceMessage.trim()) {
+      toast.error("စာသားထည့်ပါ");
+      return;
+    }
+    if (announceTarget === "single" && !announceTelegramId.trim()) {
+      toast.error("Telegram ID ထည့်ပါ");
+      return;
+    }
+    setAnnounceSending(true);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-announce`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target: announceTarget === "all" ? "all" : announceTelegramId.trim(),
+          message: announceMessage.trim(),
+        }),
+      });
+      const result = await resp.json();
+      if (result.error) throw new Error(result.error);
+      toast.success(`📢 ပို့ပြီး! Sent: ${result.sent}, Failed: ${result.failed}`);
+      setAnnounceMessage("");
+      setAnnounceTelegramId("");
+    } catch (err: any) {
+      toast.error(`ပို့၍မရပါ: ${err.message}`);
+    } finally {
+      setAnnounceSending(false);
     }
   };
 
@@ -213,6 +277,8 @@ const Admin = () => {
       fetchStats();
       if (tab === "config") fetchConfig();
       else if (tab === "security") fetchSuspicious();
+      else if (tab === "banned") fetchBanned();
+      else if (tab === "announce") { /* no fetch needed */ }
       else fetchData();
     }
   }, [adminKey, filter, tab, fetchData, fetchStats, fetchConfig]);
@@ -334,7 +400,7 @@ const Admin = () => {
               <Shield className="w-6 h-6 text-primary" />
               <h1 className="font-display text-xl font-bold text-foreground">Admin</h1>
             </div>
-            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); if (tab === "security") fetchSuspicious(); }} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchStats(); if (tab === "config") fetchConfig(); if (tab === "security") fetchSuspicious(); if (tab === "banned") fetchBanned(); }} disabled={loading}>
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </motion.div>
@@ -347,10 +413,11 @@ const Admin = () => {
             <StatsCard icon={<Zap className="w-4 h-4" />} label="Pending Payments" value={stats.pendingPayments} color="text-yellow-500" />
             <StatsCard icon={<Wallet className="w-4 h-4" />} label="Pending Withdrawals" value={stats.pendingWithdrawals} color="text-accent" />
             <StatsCard icon={<AlertTriangle className="w-4 h-4" />} label="Suspicious" value={stats.suspiciousCount} color="text-destructive" />
+            <StatsCard icon={<Trophy className="w-4 h-4" />} label="Total Points" value={stats.totalPoints} color="text-primary" />
           </motion.div>
 
           {/* Tab switcher */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-1.5 mb-4 flex-wrap">
             <Button variant={tab === "payments" ? "default" : "outline"} size="sm"
               className={`font-display text-xs ${tab === "payments" ? "gradient-primary text-primary-foreground" : ""}`}
               onClick={() => { setTab("payments"); setFilter("pending"); }}>
@@ -371,11 +438,136 @@ const Admin = () => {
               onClick={() => setTab("security")}>
               <AlertTriangle className="w-3 h-3" /> Security
             </Button>
+            <Button variant={tab === "banned" ? "default" : "outline"} size="sm"
+              className={`font-display text-xs ${tab === "banned" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => setTab("banned")}>
+              <Ban className="w-3 h-3" /> Banned
+            </Button>
+            <Button variant={tab === "announce" ? "default" : "outline"} size="sm"
+              className={`font-display text-xs ${tab === "announce" ? "gradient-primary text-primary-foreground" : ""}`}
+              onClick={() => setTab("announce")}>
+              <Megaphone className="w-3 h-3" /> Announce
+            </Button>
           </div>
 
-          {/* Security Tab */}
-          {tab === "security" ? (
-            <ScrollArea className="h-[calc(100vh-380px)]">
+          {/* Announce Tab */}
+          {tab === "announce" ? (
+            <div className="space-y-4">
+              <div className="gradient-card rounded-xl border border-border/50 p-4 space-y-4">
+                <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-primary" /> Announcement ပို့ရန်
+                </h3>
+
+                {/* Target selector */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground font-display">ပို့မည့်ပုံစံ</Label>
+                  <div className="flex gap-2">
+                    <Button variant={announceTarget === "all" ? "default" : "outline"} size="sm"
+                      className={`font-display text-xs flex-1 ${announceTarget === "all" ? "gradient-primary text-primary-foreground" : ""}`}
+                      onClick={() => setAnnounceTarget("all")}>
+                      <Users className="w-3 h-3" /> All Users
+                    </Button>
+                    <Button variant={announceTarget === "single" ? "default" : "outline"} size="sm"
+                      className={`font-display text-xs flex-1 ${announceTarget === "single" ? "gradient-primary text-primary-foreground" : ""}`}
+                      onClick={() => setAnnounceTarget("single")}>
+                      <Send className="w-3 h-3" /> Single User
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Telegram ID input (single user) */}
+                {announceTarget === "single" && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground font-display">Telegram ID</Label>
+                    <Input placeholder="e.g. 123456789" value={announceTelegramId}
+                      onChange={(e) => setAnnounceTelegramId(e.target.value)}
+                      className="bg-muted/50 border-border/50" />
+                  </div>
+                )}
+
+                {/* Message */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground font-display">စာသား</Label>
+                  <Textarea placeholder="ပို့ချင်တဲ့စာသားကိုရေးပါ..." value={announceMessage}
+                    onChange={(e) => setAnnounceMessage(e.target.value)}
+                    className="bg-muted/50 border-border/50 min-h-[120px]" />
+                </div>
+
+                {/* Send button */}
+                <Button className="w-full gradient-primary text-primary-foreground font-display"
+                  onClick={handleAnnounce} disabled={announceSending}>
+                  <Send className="w-4 h-4" />
+                  {announceSending ? "ပို့နေပါသည်..." : announceTarget === "all" ? "အားလုံးကိုပို့မည်" : "ပို့မည်"}
+                </Button>
+              </div>
+            </div>
+          ) : tab === "banned" ? (
+            <ScrollArea className="h-[calc(100vh-420px)]">
+              {loading ? (
+                <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
+              ) : bannedList.length === 0 ? (
+                <div className="text-center py-10">
+                  <ShieldCheck className="w-10 h-10 text-primary mx-auto mb-2 opacity-50" />
+                  <p className="text-muted-foreground text-sm font-display">Ban ထားတဲ့ user မရှိပါ</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {bannedList.map((user) => {
+                    const isActive = !user.unbanned_at;
+                    return (
+                      <motion.div key={user.telegram_id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                        className={`gradient-card rounded-xl p-4 border ${isActive ? "border-destructive/50 bg-destructive/5" : "border-border/50"}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-display text-sm font-bold text-foreground">{user.telegram_id}</span>
+                            {isActive ? (
+                              <Badge variant="destructive" className="text-[10px] font-display">
+                                <Ban className="w-3 h-3 mr-1" /> BANNED
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] font-display border-green-500/50 text-green-500">
+                                <ShieldCheck className="w-3 h-3 mr-1" /> UNBANNED
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Reason</span>
+                            <span className="text-foreground">{user.reason || "N/A"}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Banned At</span>
+                            <span className="text-foreground">{new Date(user.banned_at).toLocaleString()}</span>
+                          </div>
+                          {user.unbanned_at && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Unbanned At</span>
+                              <span className="text-foreground">{new Date(user.unbanned_at).toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          {isActive ? (
+                            <Button variant="outline" size="sm" className="flex-1 font-display text-xs border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => handleBanAction(user.telegram_id, "unban")} disabled={banLoading === user.telegram_id}>
+                              <ShieldCheck className="w-3 h-3" /> {banLoading === user.telegram_id ? "..." : "Unban"}
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" className="flex-1 font-display text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleBanAction(user.telegram_id, "ban")} disabled={banLoading === user.telegram_id}>
+                              <Ban className="w-3 h-3" /> {banLoading === user.telegram_id ? "..." : "Re-Ban"}
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          ) : tab === "security" ? (
+            <ScrollArea className="h-[calc(100vh-420px)]">
               {loading ? (
                 <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
               ) : suspiciousLogs.length === 0 ? (
@@ -495,7 +687,7 @@ const Admin = () => {
               </div>
 
               {/* List */}
-              <ScrollArea className="h-[calc(100vh-380px)]">
+              <ScrollArea className="h-[calc(100vh-420px)]">
                 {loading ? (
                   <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading...</div>
                 ) : currentList.length === 0 ? (
@@ -707,7 +899,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
   if (loading) return <div className="text-center py-10 text-muted-foreground text-sm font-display">Loading config...</div>;
 
   return (
-    <ScrollArea className="h-[calc(100vh-380px)]">
+    <ScrollArea className="h-[calc(100vh-420px)]">
       <div className="space-y-6">
         {/* Energy Packs */}
         <div className="gradient-card rounded-xl border border-border/50 p-4">
