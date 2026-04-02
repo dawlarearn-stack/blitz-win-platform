@@ -975,9 +975,23 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
           </div>
         </div>
 
+        {/* AdsGram Block ID */}
+        <div className="gradient-card rounded-xl border border-border/50 p-4">
+          <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-3">
+            <Eye className="w-4 h-4 text-primary" /> AdsGram Block ID
+          </h3>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Label className="text-[10px] text-muted-foreground">Block ID (numeric)</Label>
+              <Input type="number" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(Number(e.target.value))}
+                className="bg-muted/50 border-border/50 text-xs h-8" />
+            </div>
+          </div>
+        </div>
+
         {/* Save Button */}
         <Button className="w-full gradient-primary text-primary-foreground font-display" onClick={handleSaveAll} disabled={saving}>
-          <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save All Prices"}
+          <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save All Config"}
         </Button>
       </div>
     </ScrollArea>
