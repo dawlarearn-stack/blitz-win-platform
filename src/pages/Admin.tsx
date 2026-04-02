@@ -124,7 +124,20 @@ const Admin = () => {
   const [announceMessage, setAnnounceMessage] = useState("");
   const [announceSending, setAnnounceSending] = useState(false);
 
-  const adminKeyHeader = { "x-admin-key": adminKey };
+  const baseUrl = import.meta.env.VITE_API_MODE === "selfhost" 
+    ? (import.meta.env.VITE_API_BASE || "") 
+    : import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const getEndpoint = (name: string) => {
+    if (import.meta.env.VITE_API_MODE === "selfhost") return `${baseUrl}/api/${name}`;
+    return `${baseUrl}/functions/v1/${name}`;
+  };
+  
+  const getAuthHeaders = () => {
+    if (import.meta.env.VITE_API_MODE === "selfhost") return {};
+    return { Authorization: `Bearer ${anonKey}` };
+  };
 
   const fetchStats = useCallback(async () => {
     if (!adminKey) return;
