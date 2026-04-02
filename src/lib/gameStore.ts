@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { getTelegramId, generateFingerprint } from "@/lib/fingerprint";
+import { apiPost } from "@/lib/api";
 
 const STORAGE_KEY = "pgr_game_data";
 
@@ -37,7 +37,6 @@ const defaultData: UserData = {
   referrals: [],
 };
 
-// Cache for fingerprint (computed once)
 let _fingerprint: string | null = null;
 function getFingerprint(): string {
   if (!_fingerprint) _fingerprint = generateFingerprint();
@@ -51,48 +50,31 @@ export function useGameStore() {
   const [startingLevel, setStartingLevel] = useState(false);
   const telegramId = useRef(getTelegramId());
 
-  // Load state from server on mount
   useEffect(() => {
     const loadServerState = async () => {
       try {
-        const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const resp = await fetch(`${baseUrl}/functions/v1/get-game-state`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${anonKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ telegram_id: telegramId.current }),
+        const result = await apiPost("get-game-state", { telegram_id: telegramId.current });
+        setData({
+          points: result.points ?? 0,
+          energy: result.energy ?? 1000,
+          gamesPlayed: result.games_played ?? 0,
+          progress: result.progress ?? {},
+          referralCode: result.referral_code ?? "",
+          referrals: (result.referrals || []).map((r: any) => ({
+            id: r.id,
+            username: r.username,
+            gamesPlayed: r.gamesPlayed,
+            joinedAt: r.joinedAt,
+            claimed: r.claimed,
+          })),
         });
-        const result = await resp.json();
-        if (resp.ok) {
-          setData({
-            points: result.points ?? 0,
-            energy: result.energy ?? 1000,
-            gamesPlayed: result.games_played ?? 0,
-            progress: result.progress ?? {},
-            referralCode: result.referral_code ?? "",
-            referrals: (result.referrals || []).map((r: any) => ({
-              id: r.id,
-              username: r.username,
-              gamesPlayed: r.gamesPlayed,
-              joinedAt: r.joinedAt,
-              claimed: r.claimed,
-            })),
-          });
-          // Also cache locally for offline display
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            points: result.points,
-            energy: result.energy,
-            gamesPlayed: result.games_played,
-            progress: result.progress,
-            referralCode: result.referral_code,
-          }));
-        } else {
-          // Fallback to localStorage
-          loadLocalData();
-        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          points: result.points,
+          energy: result.energy,
+          gamesPlayed: result.games_played,
+          progress: result.progress,
+          referralCode: result.referral_code,
+        }));
       } catch {
         loadLocalData();
       }
@@ -112,39 +94,17 @@ export function useGameStore() {
     loadServerState();
   }, []);
 
-  // Server API: start a level (deducts energy server-side)
   const startLevel = useCallback(async (gameId: string, level: number): Promise<boolean> => {
-    if (startingLevel) return false; // prevent double-click
+    if (startingLevel) return false;
     setStartingLevel(true);
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const resp = await fetch(`${baseUrl}/functions/v1/start-level`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${anonKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          telegram_id: telegramId.current,
-          game_id: gameId,
-          level,
-          fingerprint: getFingerprint(),
-          user_agent: navigator.userAgent,
-        }),
+      const result = await apiPost("start-level", {
+        telegram_id: telegramId.current,
+        game_id: gameId,
+        level,
+        fingerprint: getFingerprint(),
+        user_agent: navigator.userAgent,
       });
-      const result = await resp.json();
-
-      if (!resp.ok) {
-        if (result.error?.includes("energy")) {
-          toast.error("Energy မလုံလောက်ပါ!", { description: "Shop မှာ Energy ဝယ်ပါ ⚡" });
-        } else if (resp.status === 429) {
-          toast.error("Too many requests! ခဏစောင့်ပါ");
-        } else {
-          toast.error(result.error || "Failed to start level");
-        }
-        return false;
-      }
 
       setActiveSession(result.session_id);
       setData(prev => ({
@@ -153,16 +113,20 @@ export function useGameStore() {
         points: result.points,
       }));
       return true;
-    } catch (err) {
-      console.error("startLevel error:", err);
-      toast.error("Server error. ထပ်ကြိုးစားပါ");
+    } catch (err: any) {
+      if (err.data?.error?.includes("energy")) {
+        toast.error("Energy မလုံလောက်ပါ!", { description: "Shop မှာ Energy ဝယ်ပါ ⚡" });
+      } else if (err.status === 429) {
+        toast.error("Too many requests! ခဏစောင့်ပါ");
+      } else {
+        toast.error(err.data?.error || "Failed to start level");
+      }
       return false;
     } finally {
       setStartingLevel(false);
     }
   }, [startingLevel]);
 
-  // Server API: complete a level (awards points server-side)
   const completeLevel = useCallback(async (gameId: string, level: number, won: boolean): Promise<number> => {
     if (!activeSession) {
       console.error("No active session to complete");
@@ -170,28 +134,13 @@ export function useGameStore() {
     }
 
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const resp = await fetch(`${baseUrl}/functions/v1/complete-level`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${anonKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          telegram_id: telegramId.current,
-          session_id: activeSession,
-          game_id: gameId,
-          level,
-          won,
-        }),
+      const result = await apiPost("complete-level", {
+        telegram_id: telegramId.current,
+        session_id: activeSession,
+        game_id: gameId,
+        level,
+        won,
       });
-      const result = await resp.json();
-
-      if (!resp.ok) {
-        console.error("completeLevel error:", result.error);
-        return 0;
-      }
 
       setActiveSession(null);
       setData(prev => ({
@@ -202,7 +151,6 @@ export function useGameStore() {
         gamesPlayed: prev.gamesPlayed + 1,
       }));
 
-      // Update local cache
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         points: result.points,
         energy: result.energy,
@@ -218,11 +166,7 @@ export function useGameStore() {
     }
   }, [activeSession, data.gamesPlayed, data.referralCode]);
 
-  // Local-only convenience methods (for non-critical UI updates)
-  const addPoints = useCallback((_amount: number) => {
-    // Points are now managed server-side via completeLevel
-    // This is a no-op kept for backward compatibility
-  }, []);
+  const addPoints = useCallback((_amount: number) => {}, []);
 
   const addEnergy = useCallback((amount: number) => {
     setData(prev => ({ ...prev, energy: prev.energy + amount }));
@@ -235,14 +179,10 @@ export function useGameStore() {
   }, [data.points]);
 
   const spendEnergy = useCallback((_amount: number = 1): boolean => {
-    // Energy spending is now done server-side via startLevel
-    // This returns true to maintain backward compat but doesn't deduct locally
     return true;
   }, []);
 
-  const updateProgress = useCallback((_gameId: string, _level: number) => {
-    // Progress is now updated server-side via completeLevel
-  }, []);
+  const updateProgress = useCallback((_gameId: string, _level: number) => {}, []);
 
   const claimReferral = useCallback((referralId: string) => {
     setData(prev => {
@@ -261,30 +201,17 @@ export function useGameStore() {
     });
   }, []);
 
-  // Refresh state from server
   const refreshState = useCallback(async () => {
     try {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const resp = await fetch(`${baseUrl}/functions/v1/get-game-state`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${anonKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ telegram_id: telegramId.current }),
-      });
-      const result = await resp.json();
-      if (resp.ok) {
-        setData(prev => ({
-          ...prev,
-          points: result.points ?? prev.points,
-          energy: result.energy ?? prev.energy,
-          gamesPlayed: result.games_played ?? prev.gamesPlayed,
-          progress: result.progress ?? prev.progress,
-          referralCode: result.referral_code ?? prev.referralCode,
-        }));
-      }
+      const result = await apiPost("get-game-state", { telegram_id: telegramId.current });
+      setData(prev => ({
+        ...prev,
+        points: result.points ?? prev.points,
+        energy: result.energy ?? prev.energy,
+        gamesPlayed: result.games_played ?? prev.gamesPlayed,
+        progress: result.progress ?? prev.progress,
+        referralCode: result.referral_code ?? prev.referralCode,
+      }));
     } catch {}
   }, []);
 

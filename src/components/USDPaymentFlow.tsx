@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { apiPost, apiUploadFile } from "@/lib/api";
 
 interface EnergyPack {
   energy: number;
@@ -147,36 +147,22 @@ export default function USDPaymentFlow({ open, onOpenChange, pack, onComplete }:
       if (screenshotFile) {
         const ext = screenshotFile.name.split(".").pop();
         const fileName = `${getTelegramId()}_${Date.now()}.${ext}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("payment-screenshots")
-          .upload(fileName, screenshotFile);
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-        } else {
-          const { data: urlData } = supabase.storage
-            .from("payment-screenshots")
-            .getPublicUrl(uploadData.path);
-          screenshotUrl = urlData.publicUrl;
-        }
+        screenshotUrl = await apiUploadFile("payment-screenshots", fileName, screenshotFile);
       }
 
       const networkNote = isCrypto && network ? ` (${CRYPTO_ADDRESSES[network].label})` : " (Binance UID)";
 
-      const { data, error } = await supabase.functions.invoke("submit-payment", {
-        body: {
-          telegram_id: getTelegramId(),
-          energy_amount: pack.energy,
-          price_mmk: pack.priceUSD,
-          payment_method: "binance",
-          receipt_last4: receiptLast4,
-          sender_name: senderName + networkNote,
-          sender_phone: senderPhone,
-          screenshot_url: screenshotUrl,
-        },
+      const data = await apiPost("submit-payment", {
+        telegram_id: getTelegramId(),
+        energy_amount: pack.energy,
+        price_mmk: pack.priceUSD,
+        payment_method: "binance",
+        receipt_last4: receiptLast4,
+        sender_name: senderName + networkNote,
+        sender_phone: senderPhone,
+        screenshot_url: screenshotUrl,
       });
 
-      if (error) throw error;
       if (data?.error) {
         toast.error(data.error);
         setSubmitting(false);

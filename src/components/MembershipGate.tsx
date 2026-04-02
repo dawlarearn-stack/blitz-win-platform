@@ -3,9 +3,7 @@ import { getTelegramId } from "@/lib/fingerprint";
 import { Loader2, ShieldAlert, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+import { apiPost } from "@/lib/api";
 
 export default function MembershipGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"loading" | "verified" | "blocked">("loading");
@@ -13,7 +11,6 @@ export default function MembershipGate({ children }: { children: React.ReactNode
   const [inGroup, setInGroup] = useState(false);
   const telegramId = getTelegramId();
 
-  // Skip gate for dev/guest users
   const isDevUser = telegramId.startsWith("dev-") || telegramId.startsWith("guest_");
 
   const checkMembership = async () => {
@@ -24,15 +21,7 @@ export default function MembershipGate({ children }: { children: React.ReactNode
 
     setStatus("loading");
     try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/check-membership`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${ANON_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ telegram_id: telegramId }),
-      });
-      const data = await resp.json();
+      const data = await apiPost("check-membership", { telegram_id: telegramId });
       if (data.verified) {
         setStatus("verified");
       } else {
@@ -41,7 +30,6 @@ export default function MembershipGate({ children }: { children: React.ReactNode
         setStatus("blocked");
       }
     } catch {
-      // On error, allow access to not block legitimate users
       setStatus("verified");
     }
   };
@@ -78,44 +66,21 @@ export default function MembershipGate({ children }: { children: React.ReactNode
           </p>
 
           <div className="space-y-3">
-            <a
-              href="https://t.me/pgrmmofficial"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full block"
-            >
-              <Button
-                variant={inChannel ? "outline" : "default"}
-                className="w-full gap-2"
-                disabled={inChannel}
-              >
+            <a href="https://t.me/pgrmmofficial" target="_blank" rel="noopener noreferrer" className="w-full block">
+              <Button variant={inChannel ? "outline" : "default"} className="w-full gap-2" disabled={inChannel}>
                 {inChannel ? "✅" : <ExternalLink className="w-4 h-4" />}
                 {inChannel ? "Channel Joined" : "Join Channel @pgrmmofficial"}
               </Button>
             </a>
-
-            <a
-              href="https://t.me/pgrmCommunity"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full block"
-            >
-              <Button
-                variant={inGroup ? "outline" : "default"}
-                className="w-full gap-2"
-                disabled={inGroup}
-              >
+            <a href="https://t.me/pgrmCommunity" target="_blank" rel="noopener noreferrer" className="w-full block">
+              <Button variant={inGroup ? "outline" : "default"} className="w-full gap-2" disabled={inGroup}>
                 {inGroup ? "✅" : <ExternalLink className="w-4 h-4" />}
                 {inGroup ? "Group Joined" : "Join Group @pgrmCommunity"}
               </Button>
             </a>
           </div>
 
-          <Button
-            onClick={checkMembership}
-            variant="secondary"
-            className="w-full"
-          >
+          <Button onClick={checkMembership} variant="secondary" className="w-full">
             🔄 Check Again
           </Button>
         </motion.div>

@@ -7,7 +7,7 @@ import {
   getRewardForRank,
 } from "@/lib/weeklyLeaderboard";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchWeeklyReferrals } from "@/lib/api";
 import { getTelegramId } from "@/lib/fingerprint";
 
 interface WeeklyInviter {
@@ -79,7 +79,6 @@ export default function WeeklyInviteLeaderboard() {
   useEffect(() => {
     const fetchWeeklyInviters = async () => {
       try {
-        // Get current week boundaries (Monday UTC)
         const now = new Date();
         const day = now.getUTCDay();
         const diff = day === 0 ? 6 : day - 1;
@@ -87,21 +86,13 @@ export default function WeeklyInviteLeaderboard() {
         weekStart.setUTCHours(0, 0, 0, 0);
         weekStart.setUTCDate(weekStart.getUTCDate() - diff);
 
-        // Query referrals created this week
-        const { data: weekReferrals, error } = await supabase
-          .from("referrals")
-          .select("referrer_telegram_id")
-          .gte("created_at", weekStart.toISOString());
+        const { referrals: weekReferrals, botUsers } = await fetchWeeklyReferrals(weekStart.toISOString());
 
-        if (error) throw error;
-
-        // Count invites per referrer
         const countMap: Record<string, number> = {};
         for (const r of weekReferrals || []) {
           countMap[r.referrer_telegram_id] = (countMap[r.referrer_telegram_id] || 0) + 1;
         }
 
-        // Sort by invite count descending, take top 99
         const sorted = Object.entries(countMap)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 99);
@@ -112,13 +103,6 @@ export default function WeeklyInviteLeaderboard() {
           setLoading(false);
           return;
         }
-
-        // Fetch usernames for top inviters
-        const topIds = sorted.map(([id]) => id);
-        const { data: botUsers } = await supabase
-          .from("bot_users")
-          .select("telegram_id, username, first_name")
-          .in("telegram_id", topIds);
 
         const userMap: Record<string, string> = {};
         for (const u of botUsers || []) {

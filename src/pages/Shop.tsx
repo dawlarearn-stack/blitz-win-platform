@@ -9,7 +9,7 @@ import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchAppConfig, apiPost } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
@@ -65,20 +65,12 @@ const Shop = () => {
   useEffect(() => {
     const fetchPricing = async () => {
       try {
-        const { data: configs } = await supabase
-          .from("app_config")
-          .select("key, value")
-          .in("key", ["energy_packs", "point_conversions"]);
-
-        if (configs) {
-          for (const c of configs) {
-            if (c.key === "energy_packs" && Array.isArray(c.value)) {
-              setEnergyPacks(c.value as unknown as EnergyPack[]);
-            }
-            if (c.key === "point_conversions" && Array.isArray(c.value)) {
-              setConversions(c.value as unknown as ConversionOption[]);
-            }
-          }
+        const configs = await fetchAppConfig(["energy_packs", "point_conversions"]);
+        if (configs.energy_packs && Array.isArray(configs.energy_packs)) {
+          setEnergyPacks(configs.energy_packs as unknown as EnergyPack[]);
+        }
+        if (configs.point_conversions && Array.isArray(configs.point_conversions)) {
+          setConversions(configs.point_conversions as unknown as ConversionOption[]);
         }
       } catch (err) {
         console.error("Failed to fetch pricing:", err);
@@ -115,35 +107,14 @@ const Shop = () => {
         return;
       }
 
-      // Server-side conversion
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const telegramId = getTelegramId();
       
-      const resp = await fetch(`${baseUrl}/functions/v1/convert-points`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${anonKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          telegram_id: telegramId,
-          points_cost: selectedConversion.pointsCost,
-          energy_amount: selectedConversion.energy,
-        }),
+      const result = await apiPost("convert-points", {
+        telegram_id: telegramId,
+        points_cost: selectedConversion.pointsCost,
+        energy_amount: selectedConversion.energy,
       });
-      const result = await resp.json();
 
-      if (!resp.ok) {
-        if (result.error?.includes("Insufficient")) {
-          setResultMsg("❌ Points မလုံလောက်ပါ");
-        } else {
-          setResultMsg(`❌ ${result.error || "Convert မအောင်မြင်ပါ"}`);
-        }
-        return;
-      }
-
-      // Refresh state from server
       await refreshState();
       setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
     } catch (err) {

@@ -15,6 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { adminGet, adminPost } from "@/lib/api";
 
 const ADMIN_KEY_STORAGE = "pgr_admin_key";
 
@@ -123,14 +124,26 @@ const Admin = () => {
   const [announceMessage, setAnnounceMessage] = useState("");
   const [announceSending, setAnnounceSending] = useState(false);
 
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const baseUrl = import.meta.env.VITE_API_MODE === "selfhost" 
+    ? (import.meta.env.VITE_API_BASE || "") 
+    : import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  
+  const getEndpoint = (name: string) => {
+    if (import.meta.env.VITE_API_MODE === "selfhost") return `${baseUrl}/api/${name}`;
+    return `${baseUrl}/functions/v1/${name}`;
+  };
+  
+  const getAuthHeaders = (): Record<string, string> => {
+    if (import.meta.env.VITE_API_MODE === "selfhost") return {};
+    return { Authorization: `Bearer ${anonKey}` };
+  };
 
   const fetchStats = useCallback(async () => {
     if (!adminKey) return;
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      const resp = await fetch(getEndpoint("admin-stats"), {
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const data = await resp.json();
       if (resp.ok) setStats(data);
@@ -141,8 +154,8 @@ const Admin = () => {
     if (!adminKey) return;
     setConfigLoading(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=config`, {
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      const resp = await fetch(getEndpoint("admin-stats?action=config"), {
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const result = await resp.json();
       if (result.data) {
@@ -161,8 +174,8 @@ const Admin = () => {
     setLoading(true);
     try {
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
-      const resp = await fetch(`${baseUrl}/functions/v1/${endpoint}?status=${filter}`, {
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      const resp = await fetch(getEndpoint(`${endpoint}?status=${filter}`), {
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const result = await resp.json();
       if (result.error) {
@@ -189,8 +202,8 @@ const Admin = () => {
     if (!adminKey) return;
     setLoading(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=suspicious`, {
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      const resp = await fetch(getEndpoint("admin-stats?action=suspicious"), {
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const result = await resp.json();
       if (resp.ok) {
@@ -212,8 +225,8 @@ const Admin = () => {
     if (!adminKey) return;
     setLoading(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats?action=banned`, {
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
+      const resp = await fetch(getEndpoint("admin-stats?action=banned"), {
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const result = await resp.json();
       if (resp.ok && result.data) {
@@ -226,9 +239,9 @@ const Admin = () => {
   const handleBanAction = async (telegramId: string, action: "ban" | "unban") => {
     setBanLoading(telegramId);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+      const resp = await fetch(getEndpoint("admin-stats"), {
         method: "POST",
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ action, telegram_id: telegramId, reason: "Banned from admin dashboard" }),
       });
       const result = await resp.json();
@@ -254,9 +267,9 @@ const Admin = () => {
     }
     setAnnounceSending(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-announce`, {
+      const resp = await fetch(getEndpoint("admin-announce"), {
         method: "POST",
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({
           target: announceTarget === "all" ? "all" : announceTelegramId.trim(),
           message: announceMessage.trim(),
@@ -303,9 +316,9 @@ const Admin = () => {
   const handlePaymentAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-payments`, {
+      const resp = await fetch(getEndpoint("admin-payments"), {
         method: "POST",
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
       });
       const result = await resp.json();
@@ -324,9 +337,9 @@ const Admin = () => {
   const handleWithdrawalAction = async (id: string, action: "approved" | "rejected") => {
     setActionLoading(true);
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-withdrawals`, {
+      const resp = await fetch(getEndpoint("admin-withdrawals"), {
         method: "POST",
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
       });
       const result = await resp.json();
@@ -344,9 +357,9 @@ const Admin = () => {
 
   const saveConfig = async (key: string, value: any) => {
     try {
-      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+      const resp = await fetch(getEndpoint("admin-stats"), {
         method: "POST",
-        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        headers: { "x-admin-key": adminKey, ...getAuthHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ key, value }),
       });
       const result = await resp.json();
