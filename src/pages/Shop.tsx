@@ -143,12 +143,8 @@ const Shop = () => {
         return;
       }
 
-      // Update local state with server values
-      setData(prev => ({
-        ...prev,
-        points: result.points,
-        energy: result.energy,
-      }));
+      // Refresh state from server
+      await refreshState();
       setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
     } catch (err) {
       setResultMsg("❌ Server error. ထပ်ကြိုးစားပါ");
