@@ -57,7 +57,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AppInner />
+        <MembershipGate>
+          <AppInner />
+        </MembershipGate>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
