@@ -7,7 +7,7 @@ import {
   getRewardForRank,
 } from "@/lib/weeklyLeaderboard";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchWeeklyReferrals } from "@/lib/api";
 import { getTelegramId } from "@/lib/fingerprint";
 
 interface WeeklyInviter {
