@@ -15,7 +15,7 @@ interface AdController {
   show: () => Promise<{ done: boolean; description: string; state: string; error: boolean }>;
 }
 
-const BLOCK_ID = "26550";
+const BLOCK_ID = 26550;
 
 let controller: AdController | null = null;
 
