@@ -70,10 +70,17 @@ async function ensureMonetagSdk(timeoutMs = 4000): Promise<boolean> {
  * Pass the 0-indexed level that was just completed.
  * Ad triggers after level 2, 5, 8, 11… (i.e. every 3rd completion).
  */
-export async function trackNextLevel(completedLevel: number): Promise<void> {
+/**
+ * Show a Monetag rewarded interstitial on milestone levels (3, 6, 9, 12…).
+ * Pass the 0-indexed level that was just completed.
+ * Returns true if ad was shown and completed, false otherwise.
+ */
+export async function trackNextLevel(completedLevel: number): Promise<boolean> {
+  // completedLevel is 0-indexed, so level 2 = "Level 3" displayed
   if ((completedLevel + 1) % 3 === 0) {
-    await showInterstitial();
+    return await showInterstitial();
   }
+  return false;
 }
 
 async function showInterstitial(): Promise<boolean> {

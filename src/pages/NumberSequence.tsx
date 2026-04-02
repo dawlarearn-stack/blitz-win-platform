@@ -170,7 +170,7 @@ const NumberSequence = () => {
     setFeedbackCorrect(false);
   }, [level, startLevel]);
 
-  const nextLevel = () => { trackNextLevel(level); setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
+  const nextLevel = async () => { await trackNextLevel(level); setLevel((l) => Math.min(l + 1, 100)); setGameState("idle"); };
   const retry = async () => { await showRewardAd(); setGameState("idle"); };
 
   return (
