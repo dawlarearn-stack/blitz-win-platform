@@ -65,20 +65,12 @@ const Shop = () => {
   useEffect(() => {
     const fetchPricing = async () => {
       try {
-        const { data: configs } = await supabase
-          .from("app_config")
-          .select("key, value")
-          .in("key", ["energy_packs", "point_conversions"]);
-
-        if (configs) {
-          for (const c of configs) {
-            if (c.key === "energy_packs" && Array.isArray(c.value)) {
-              setEnergyPacks(c.value as unknown as EnergyPack[]);
-            }
-            if (c.key === "point_conversions" && Array.isArray(c.value)) {
-              setConversions(c.value as unknown as ConversionOption[]);
-            }
-          }
+        const configs = await fetchAppConfig(["energy_packs", "point_conversions"]);
+        if (configs.energy_packs && Array.isArray(configs.energy_packs)) {
+          setEnergyPacks(configs.energy_packs as unknown as EnergyPack[]);
+        }
+        if (configs.point_conversions && Array.isArray(configs.point_conversions)) {
+          setConversions(configs.point_conversions as unknown as ConversionOption[]);
         }
       } catch (err) {
         console.error("Failed to fetch pricing:", err);
