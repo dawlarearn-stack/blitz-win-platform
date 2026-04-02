@@ -115,6 +115,7 @@ const Admin = () => {
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
   const [conversions, setConversions] = useState<ConversionOption[]>([]);
   const [configLoading, setConfigLoading] = useState(false);
+  const [adsgramBlockId, setAdsgramBlockId] = useState<number>(26550);
 
   // Announcement
   const [announceTarget, setAnnounceTarget] = useState<"all" | "single">("all");
@@ -148,6 +149,7 @@ const Admin = () => {
         for (const item of result.data) {
           if (item.key === "energy_packs") setEnergyPacks(item.value);
           if (item.key === "point_conversions") setConversions(item.value);
+          if (item.key === "adsgram_block_id") setAdsgramBlockId(Number(item.value) || 26550);
         }
       }
     } catch {}
@@ -664,6 +666,8 @@ const Admin = () => {
               conversions={conversions}
               setEnergyPacks={setEnergyPacks}
               setConversions={setConversions}
+              adsgramBlockId={adsgramBlockId}
+              setAdsgramBlockId={setAdsgramBlockId}
               onSave={saveConfig}
               loading={configLoading}
             />
@@ -861,11 +865,13 @@ function StatsCard({ icon, label, value, color, pulse }: {
 }
 
 // Config Panel Component
-function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions, onSave, loading }: {
+function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions, adsgramBlockId, setAdsgramBlockId, onSave, loading }: {
   energyPacks: EnergyPack[];
   conversions: ConversionOption[];
   setEnergyPacks: (v: EnergyPack[]) => void;
   setConversions: (v: ConversionOption[]) => void;
+  adsgramBlockId: number;
+  setAdsgramBlockId: (v: number) => void;
   onSave: (key: string, value: any) => Promise<void>;
   loading: boolean;
 }) {
@@ -893,6 +899,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
     setSaving(true);
     await onSave("energy_packs", energyPacks);
     await onSave("point_conversions", conversions);
+    await onSave("adsgram_block_id", adsgramBlockId);
     setSaving(false);
   };
 
@@ -968,9 +975,23 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
           </div>
         </div>
 
+        {/* AdsGram Block ID */}
+        <div className="gradient-card rounded-xl border border-border/50 p-4">
+          <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-3">
+            <Settings className="w-4 h-4 text-primary" /> AdsGram Block ID
+          </h3>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Label className="text-[10px] text-muted-foreground">Block ID (numeric)</Label>
+              <Input type="number" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(Number(e.target.value))}
+                className="bg-muted/50 border-border/50 text-xs h-8" />
+            </div>
+          </div>
+        </div>
+
         {/* Save Button */}
         <Button className="w-full gradient-primary text-primary-foreground font-display" onClick={handleSaveAll} disabled={saving}>
-          <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save All Prices"}
+          <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save All Config"}
         </Button>
       </div>
     </ScrollArea>
