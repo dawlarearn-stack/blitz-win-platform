@@ -115,16 +115,6 @@ const Shop = () => {
         energy_amount: selectedConversion.energy,
       });
 
-      if (!resp.ok) {
-        if (result.error?.includes("Insufficient")) {
-          setResultMsg("❌ Points မလုံလောက်ပါ");
-        } else {
-          setResultMsg(`❌ ${result.error || "Convert မအောင်မြင်ပါ"}`);
-        }
-        return;
-      }
-
-      // Refresh state from server
       await refreshState();
       setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
     } catch (err) {
