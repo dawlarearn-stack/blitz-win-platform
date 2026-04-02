@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
-  Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft, AlertTriangle,
+  Wallet, Zap, Users, Activity, Settings, Save, Plus, Trash2, ArrowRightLeft, AlertTriangle, Ban, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +96,9 @@ const Admin = () => {
   // Stats
   const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, activeUsers: 0, pendingPayments: 0, pendingWithdrawals: 0, suspiciousCount: 0 });
   const [suspiciousLogs, setSuspiciousLogs] = useState<SuspiciousLog[]>([]);
+  const [bannedUsers, setBannedUsers] = useState<Record<string, { reason: string; unbanned_at: string | null }>>({});
+  const [firstAccounts, setFirstAccounts] = useState<Record<string, string>>({});
+  const [banLoading, setBanLoading] = useState<string | null>(null);
 
   // Config
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
@@ -171,10 +174,39 @@ const Admin = () => {
         headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}` },
       });
       const result = await resp.json();
-      if (resp.ok && result.data) setSuspiciousLogs(result.data);
+      if (resp.ok) {
+        if (result.data) setSuspiciousLogs(result.data);
+        if (result.banned) {
+          const banMap: Record<string, { reason: string; unbanned_at: string | null }> = {};
+          for (const b of result.banned) {
+            banMap[b.telegram_id] = { reason: b.reason, unbanned_at: b.unbanned_at };
+          }
+          setBannedUsers(banMap);
+        }
+        if (result.firstAccounts) setFirstAccounts(result.firstAccounts);
+      }
     } catch {}
     setLoading(false);
   }, [adminKey, baseUrl, anonKey]);
+
+  const handleBanAction = async (telegramId: string, action: "ban" | "unban") => {
+    setBanLoading(telegramId);
+    try {
+      const resp = await fetch(`${baseUrl}/functions/v1/admin-stats`, {
+        method: "POST",
+        headers: { "x-admin-key": adminKey, Authorization: `Bearer ${anonKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action, telegram_id: telegramId, reason: "Banned from admin dashboard" }),
+      });
+      const result = await resp.json();
+      if (result.error) throw new Error(result.error);
+      toast.success(action === "ban" ? "🚫 Banned!" : "✅ Unbanned!");
+      fetchSuspicious();
+    } catch {
+      toast.error("Action failed");
+    } finally {
+      setBanLoading(null);
+    }
+  };
 
   useEffect(() => {
     if (adminKey) {
@@ -353,42 +385,84 @@ const Admin = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {suspiciousLogs.map((log) => (
-                    <motion.div key={log.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
-                      className="gradient-card rounded-xl p-4 border border-border/50">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant="destructive" className="text-[10px] font-display">
-                          {log.action_type.replace(/_/g, " ").toUpperCase()}
-                        </Badge>
-                        <span className="text-muted-foreground text-[10px]">
-                          {new Date(log.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Telegram ID</span>
-                          <span className="text-foreground font-bold">{log.telegram_id}</span>
+                  {suspiciousLogs.map((log) => {
+                    const isBanned = bannedUsers[log.telegram_id] && !bannedUsers[log.telegram_id].unbanned_at;
+                    const isMultiAccount = log.action_type === "multi_account_fingerprint";
+                    const fp = log.details?.fingerprint;
+                    const isFirstAccount = isMultiAccount && fp && firstAccounts[fp] === log.telegram_id;
+
+                    return (
+                      <motion.div key={log.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                        className={`gradient-card rounded-xl p-4 border ${isBanned ? "border-destructive/50 bg-destructive/5" : "border-border/50"}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="destructive" className="text-[10px] font-display">
+                              {log.action_type.replace(/_/g, " ").toUpperCase()}
+                            </Badge>
+                            {isBanned && (
+                              <Badge variant="outline" className="text-[10px] font-display border-destructive/50 text-destructive">
+                                <Ban className="w-3 h-3 mr-1" /> BANNED
+                              </Badge>
+                            )}
+                          </div>
+                          <span className="text-muted-foreground text-[10px]">
+                            {new Date(log.created_at).toLocaleString()}
+                          </span>
                         </div>
-                        {log.ip_address && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">IP</span>
-                            <span className="text-foreground">{log.ip_address}</span>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Telegram ID</span>
+                            <span className="text-foreground font-bold">{log.telegram_id}</span>
                           </div>
-                        )}
-                        {log.device_info && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Device</span>
-                            <span className="text-foreground text-[10px] max-w-[200px] truncate">{log.device_info}</span>
-                          </div>
-                        )}
-                        {log.details && Object.keys(log.details).length > 0 && (
-                          <div className="mt-2 p-2 rounded-lg bg-secondary/50 text-[10px] text-muted-foreground font-mono break-all">
-                            {JSON.stringify(log.details, null, 2)}
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
+                          {isMultiAccount && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">Account Type</span>
+                              {isFirstAccount ? (
+                                <Badge variant="outline" className="text-[10px] border-primary/50 text-primary">
+                                  <ShieldCheck className="w-3 h-3 mr-1" /> ORIGINAL
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] border-yellow-500/50 text-yellow-500">
+                                  <AlertTriangle className="w-3 h-3 mr-1" /> DUPLICATE
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                          {log.ip_address && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">IP</span>
+                              <span className="text-foreground">{log.ip_address}</span>
+                            </div>
+                          )}
+                          {log.device_info && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Device</span>
+                              <span className="text-foreground text-[10px] max-w-[200px] truncate">{log.device_info}</span>
+                            </div>
+                          )}
+                          {log.details && Object.keys(log.details).length > 0 && (
+                            <div className="mt-2 p-2 rounded-lg bg-secondary/50 text-[10px] text-muted-foreground font-mono break-all">
+                              {JSON.stringify(log.details, null, 2)}
+                            </div>
+                          )}
+                        </div>
+                        {/* Ban/Unban buttons */}
+                        <div className="flex gap-2 mt-3">
+                          {isBanned ? (
+                            <Button variant="outline" size="sm" className="flex-1 font-display text-xs border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => handleBanAction(log.telegram_id, "unban")} disabled={banLoading === log.telegram_id}>
+                              <ShieldCheck className="w-3 h-3" /> {banLoading === log.telegram_id ? "..." : "Unban"}
+                            </Button>
+                          ) : (
+                            <Button variant="outline" size="sm" className="flex-1 font-display text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleBanAction(log.telegram_id, "ban")} disabled={banLoading === log.telegram_id}>
+                              <Ban className="w-3 h-3" /> {banLoading === log.telegram_id ? "..." : "Ban"}
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </ScrollArea>

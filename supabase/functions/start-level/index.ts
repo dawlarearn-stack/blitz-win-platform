@@ -44,6 +44,19 @@ Deno.serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("cf-connecting-ip") || "unknown";
 
+    // Check if user is banned
+    const { data: banRecord } = await supabase
+      .from("banned_users")
+      .select("telegram_id, unbanned_at")
+      .eq("telegram_id", telegram_id)
+      .single();
+
+    if (banRecord && !banRecord.unbanned_at) {
+      return new Response(JSON.stringify({ error: "Your account has been banned." }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Rate limit: max 10 requests per 10 seconds
     const tenSecondsAgo = new Date(Date.now() - 10_000).toISOString();
     const { count: recentSessions } = await supabase

@@ -32,6 +32,33 @@ export type Database = {
         }
         Relationships: []
       }
+      banned_users: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          id: string
+          reason: string | null
+          telegram_id: string
+          unbanned_at: string | null
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          id?: string
+          reason?: string | null
+          telegram_id: string
+          unbanned_at?: string | null
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          id?: string
+          reason?: string | null
+          telegram_id?: string
+          unbanned_at?: string | null
+        }
+        Relationships: []
+      }
       bot_users: {
         Row: {
           first_name: string | null

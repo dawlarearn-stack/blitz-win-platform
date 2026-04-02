@@ -49,6 +49,44 @@ Deno.serve(async (req) => {
           .order("created_at", { ascending: false })
           .limit(100);
         if (error) throw error;
+
+        // Also fetch banned users list
+        const { data: bannedData } = await supabase
+          .from("banned_users")
+          .select("telegram_id, reason, banned_at, unbanned_at");
+        
+        // For multi_account_fingerprint logs, fetch the first account per fingerprint
+        const multiLogs = (data || []).filter((d: any) => d.action_type === "multi_account_fingerprint");
+        const fingerprints = [...new Set(multiLogs.map((l: any) => l.details?.fingerprint).filter(Boolean))];
+        
+        let firstAccounts: Record<string, string> = {};
+        for (const fp of fingerprints) {
+          const { data: fpData } = await supabase
+            .from("device_fingerprints")
+            .select("telegram_id")
+            .eq("fingerprint", fp)
+            .order("first_seen_at", { ascending: true })
+            .limit(1);
+          if (fpData && fpData.length > 0) {
+            firstAccounts[fp] = fpData[0].telegram_id;
+          }
+        }
+
+        return new Response(JSON.stringify({ 
+          data, 
+          banned: bannedData || [],
+          firstAccounts,
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "banned") {
+        const { data, error } = await supabase
+          .from("banned_users")
+          .select("*")
+          .order("banned_at", { ascending: false });
+        if (error) throw error;
         return new Response(JSON.stringify({ data }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -76,9 +114,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    // POST /admin-stats - update config
+    // POST /admin-stats - update config or ban/unban
     if (req.method === "POST") {
-      const { key, value } = await req.json();
+      const body = await req.json();
+      const { action } = body;
+
+      // Ban user
+      if (action === "ban") {
+        const { telegram_id, reason } = body;
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await supabase
+          .from("banned_users")
+          .upsert(
+            { telegram_id, reason: reason || "Banned by admin", banned_at: new Date().toISOString(), unbanned_at: null },
+            { onConflict: "telegram_id" }
+          );
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, action: "banned" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Unban user
+      if (action === "unban") {
+        const { telegram_id } = body;
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await supabase
+          .from("banned_users")
+          .update({ unbanned_at: new Date().toISOString() })
+          .eq("telegram_id", telegram_id);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, action: "unbanned" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Default: config update
+      const { key, value } = body;
       if (!key || value === undefined) {
         return new Response(JSON.stringify({ error: "key and value required" }), {
           status: 400,
