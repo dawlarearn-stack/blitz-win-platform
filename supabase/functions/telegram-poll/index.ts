@@ -6,7 +6,7 @@ const MIN_REMAINING_MS = 5_000;
 
 const REQUIRED_CHANNEL = "@pgrmmofficial";
 const REQUIRED_GROUP = "@pgrmCommunity";
-const WEBAPP_URL = "https://pgrmm.pages.dev";
+const WEBAPP_URL = "https://pgrmm.top";
 
 async function telegramApi(method: string, body: Record<string, unknown>, apiKey: string, lovableKey: string) {
   const resp = await fetch(`${GATEWAY_URL}/${method}`, {
