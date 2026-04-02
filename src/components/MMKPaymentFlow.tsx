@@ -126,39 +126,23 @@ export default function MMKPaymentFlow({ open, onOpenChange, pack, onComplete }:
     try {
       let screenshotUrl: string | null = null;
 
-      // Upload screenshot if provided
       if (screenshotFile) {
         const ext = screenshotFile.name.split(".").pop();
         const fileName = `${getTelegramId()}_${Date.now()}.${ext}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("payment-screenshots")
-          .upload(fileName, screenshotFile);
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-        } else {
-          const { data: urlData } = supabase.storage
-            .from("payment-screenshots")
-            .getPublicUrl(uploadData.path);
-          screenshotUrl = urlData.publicUrl;
-        }
+        screenshotUrl = await apiUploadFile("payment-screenshots", fileName, screenshotFile);
       }
 
-      // Submit payment request via edge function
-      const { data, error } = await supabase.functions.invoke("submit-payment", {
-        body: {
-          telegram_id: getTelegramId(),
-          energy_amount: pack.energy,
-          price_mmk: pack.priceMMK,
-          payment_method: method,
-          receipt_last4: receiptLast4,
-          sender_name: senderName,
-          sender_phone: senderPhone,
-          screenshot_url: screenshotUrl,
-        },
+      const data = await apiPost("submit-payment", {
+        telegram_id: getTelegramId(),
+        energy_amount: pack.energy,
+        price_mmk: pack.priceMMK,
+        payment_method: method,
+        receipt_last4: receiptLast4,
+        sender_name: senderName,
+        sender_phone: senderPhone,
+        screenshot_url: screenshotUrl,
       });
 
-      if (error) throw error;
       if (data?.error) {
         toast.error(data.error);
         setSubmitting(false);
