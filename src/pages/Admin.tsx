@@ -123,8 +123,7 @@ const Admin = () => {
   const [announceMessage, setAnnounceMessage] = useState("");
   const [announceSending, setAnnounceSending] = useState(false);
 
-  const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const adminKeyHeader = { "x-admin-key": adminKey };
 
   const fetchStats = useCallback(async () => {
     if (!adminKey) return;
