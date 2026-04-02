@@ -87,22 +87,53 @@ export default function WeeklyInviteLeaderboard() {
         weekStart.setUTCHours(0, 0, 0, 0);
         weekStart.setUTCDate(weekStart.getUTCDate() - diff);
 
-        // Query bot_users who joined this week, grouped by who referred them
-        // For now, we'll count bot_users joined this week as a proxy
-        // In a full implementation, you'd have a referrals table tracking who invited whom
-        // For now, show real users from bot_users ordered by join date this week
-        const { data: weekUsers, error } = await supabase
-          .from("bot_users")
-          .select("telegram_id, username, first_name")
-          .gte("joined_at", weekStart.toISOString())
-          .order("joined_at", { ascending: true });
+        // Query referrals created this week
+        const { data: weekReferrals, error } = await supabase
+          .from("referrals")
+          .select("referrer_telegram_id")
+          .gte("created_at", weekStart.toISOString());
 
         if (error) throw error;
 
-        // Since we don't have a referral tracking table yet, show empty
-        // The weekly invite race needs a proper referral tracking system
-        setInviters([]);
-        setUserInvites(0);
+        // Count invites per referrer
+        const countMap: Record<string, number> = {};
+        for (const r of weekReferrals || []) {
+          countMap[r.referrer_telegram_id] = (countMap[r.referrer_telegram_id] || 0) + 1;
+        }
+
+        // Sort by invite count descending, take top 99
+        const sorted = Object.entries(countMap)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 99);
+
+        if (sorted.length === 0) {
+          setInviters([]);
+          setUserInvites(0);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch usernames for top inviters
+        const topIds = sorted.map(([id]) => id);
+        const { data: botUsers } = await supabase
+          .from("bot_users")
+          .select("telegram_id, username, first_name")
+          .in("telegram_id", topIds);
+
+        const userMap: Record<string, string> = {};
+        for (const u of botUsers || []) {
+          userMap[u.telegram_id] = u.username || u.first_name || u.telegram_id;
+        }
+
+        const result: WeeklyInviter[] = sorted.map(([id, count], i) => ({
+          rank: i + 1,
+          name: userMap[id] || id,
+          invites: count,
+          telegramId: id,
+        }));
+
+        setInviters(result);
+        setUserInvites(countMap[currentUserId] || 0);
       } catch (err) {
         console.error("Failed to fetch weekly inviters:", err);
       }
