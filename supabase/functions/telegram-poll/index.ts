@@ -147,6 +147,7 @@ Deno.serve(async () => {
         if (u.message?.text?.startsWith("/start")) {
           const from = u.message.from;
           const chatId = u.message.chat.id;
+          const messageText = u.message.text.trim();
 
           // Upsert bot user
           await supabase.from("bot_users").upsert(
@@ -157,6 +158,31 @@ Deno.serve(async () => {
             },
             { onConflict: "telegram_id", ignoreDuplicates: false }
           );
+
+          // Check for referral code: /start ref_PGR-XXXXXX
+          const parts = messageText.split(" ");
+          if (parts.length > 1 && parts[1].startsWith("ref_")) {
+            const refCode = parts[1].replace("ref_", "");
+            const referredId = String(from.id);
+
+            // Find referrer by referral_code
+            const { data: referrer } = await supabase
+              .from("user_game_state")
+              .select("telegram_id")
+              .eq("referral_code", refCode)
+              .single();
+
+            if (referrer && referrer.telegram_id !== referredId) {
+              // Insert referral (ignore if already exists due to unique constraint)
+              await supabase.from("referrals").upsert(
+                {
+                  referrer_telegram_id: referrer.telegram_id,
+                  referred_telegram_id: referredId,
+                },
+                { onConflict: "referred_telegram_id", ignoreDuplicates: true }
+              );
+            }
+          }
 
           await handleStartCommand(chatId, TELEGRAM_API_KEY, LOVABLE_API_KEY);
           totalProcessed++;
