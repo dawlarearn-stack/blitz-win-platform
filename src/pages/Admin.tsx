@@ -978,7 +978,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
         {/* AdsGram Block ID */}
         <div className="gradient-card rounded-xl border border-border/50 p-4">
           <h3 className="font-display text-sm font-bold text-foreground flex items-center gap-2 mb-3">
-            <Eye className="w-4 h-4 text-primary" /> AdsGram Block ID
+            <Settings className="w-4 h-4 text-primary" /> AdsGram Block ID
           </h3>
           <div className="flex gap-2 items-end">
             <div className="flex-1">
