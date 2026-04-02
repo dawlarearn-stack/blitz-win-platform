@@ -174,7 +174,7 @@ const Admin = () => {
     setLoading(true);
     try {
       const endpoint = tab === "payments" ? "admin-payments" : "admin-withdrawals";
-      const resp = await fetch(getEndpoint("${endpoint}?status=${filter}"), {
+      const resp = await fetch(getEndpoint(`${endpoint}?status=${filter}`), {
         headers: { "x-admin-key": adminKey, ...getAuthHeaders() },
       });
       const result = await resp.json();
