@@ -107,24 +107,13 @@ const Shop = () => {
         return;
       }
 
-      // Server-side conversion
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const telegramId = getTelegramId();
       
-      const resp = await fetch(`${baseUrl}/functions/v1/convert-points`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${anonKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          telegram_id: telegramId,
-          points_cost: selectedConversion.pointsCost,
-          energy_amount: selectedConversion.energy,
-        }),
+      const result = await apiPost("convert-points", {
+        telegram_id: telegramId,
+        points_cost: selectedConversion.pointsCost,
+        energy_amount: selectedConversion.energy,
       });
-      const result = await resp.json();
 
       if (!resp.ok) {
         if (result.error?.includes("Insufficient")) {
