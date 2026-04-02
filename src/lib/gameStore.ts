@@ -73,7 +73,13 @@ export function useGameStore() {
             gamesPlayed: result.games_played ?? 0,
             progress: result.progress ?? {},
             referralCode: result.referral_code ?? "",
-            referrals: [], // referrals handled separately
+            referrals: (result.referrals || []).map((r: any) => ({
+              id: r.id,
+              username: r.username,
+              gamesPlayed: r.gamesPlayed,
+              joinedAt: r.joinedAt,
+              claimed: r.claimed,
+            })),
           });
           // Also cache locally for offline display
           localStorage.setItem(STORAGE_KEY, JSON.stringify({

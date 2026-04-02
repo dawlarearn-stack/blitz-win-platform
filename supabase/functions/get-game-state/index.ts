@@ -42,12 +42,42 @@ Deno.serve(async (req) => {
       state = newState;
     }
 
+    // Fetch referrals where this user is the referrer
+    const { data: referralRows } = await supabase
+      .from("referrals")
+      .select("id, referred_telegram_id, created_at, claimed")
+      .eq("referrer_telegram_id", telegram_id);
+
+    // Enrich referrals with user info and games played
+    const referrals = [];
+    if (referralRows && referralRows.length > 0) {
+      const referredIds = referralRows.map(r => r.referred_telegram_id);
+
+      const [{ data: botUsers }, { data: gameStates }] = await Promise.all([
+        supabase.from("bot_users").select("telegram_id, username, first_name").in("telegram_id", referredIds),
+        supabase.from("user_game_state").select("telegram_id, games_played").in("telegram_id", referredIds),
+      ]);
+
+      for (const ref of referralRows) {
+        const user = botUsers?.find(u => u.telegram_id === ref.referred_telegram_id);
+        const gs = gameStates?.find(g => g.telegram_id === ref.referred_telegram_id);
+        referrals.push({
+          id: ref.id,
+          username: user?.username || user?.first_name || ref.referred_telegram_id,
+          gamesPlayed: gs?.games_played || 0,
+          joinedAt: new Date(ref.created_at).getTime(),
+          claimed: ref.claimed,
+        });
+      }
+    }
+
     return new Response(JSON.stringify({
       points: state!.points,
       energy: state!.energy,
       games_played: state!.games_played,
       progress: state!.progress,
       referral_code: state!.referral_code,
+      referrals,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
