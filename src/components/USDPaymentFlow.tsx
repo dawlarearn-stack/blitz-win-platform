@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { apiPost, apiUploadFile } from "@/lib/api";
 
 interface EnergyPack {
   energy: number;
