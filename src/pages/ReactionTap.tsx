@@ -221,8 +221,8 @@ const ReactionTap = () => {
     setMisses((m) => m + 1);
   };
 
-  const nextLevel = () => {
-    trackNextLevel(level);
+  const nextLevel = async () => {
+    await trackNextLevel(level);
     setLevel((l) => Math.min(l + 1, 100));
     setGameState("idle");
   };
