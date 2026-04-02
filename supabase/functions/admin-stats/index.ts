@@ -114,9 +114,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    // POST /admin-stats - update config
+    // POST /admin-stats - update config or ban/unban
     if (req.method === "POST") {
-      const { key, value } = await req.json();
+      const body = await req.json();
+      const { action } = body;
+
+      // Ban user
+      if (action === "ban") {
+        const { telegram_id, reason } = body;
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await supabase
+          .from("banned_users")
+          .upsert(
+            { telegram_id, reason: reason || "Banned by admin", banned_at: new Date().toISOString(), unbanned_at: null },
+            { onConflict: "telegram_id" }
+          );
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, action: "banned" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Unban user
+      if (action === "unban") {
+        const { telegram_id } = body;
+        if (!telegram_id) {
+          return new Response(JSON.stringify({ error: "telegram_id required" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const { error } = await supabase
+          .from("banned_users")
+          .update({ unbanned_at: new Date().toISOString() })
+          .eq("telegram_id", telegram_id);
+        if (error) throw error;
+        return new Response(JSON.stringify({ success: true, action: "unbanned" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Default: config update
+      const { key, value } = body;
       if (!key || value === undefined) {
         return new Response(JSON.stringify({ error: "key and value required" }), {
           status: 400,
