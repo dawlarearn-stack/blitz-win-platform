@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History } from "lucide-react";
+import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History, Loader2 } from "lucide-react";
+import { showMonetangRewardAd } from "@/lib/monetag";
+import { toast } from "sonner";
+import { getTelegramId } from "@/lib/fingerprint";
 import MMKPaymentFlow from "@/components/MMKPaymentFlow";
 import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
@@ -45,9 +48,10 @@ const defaultConversions: ConversionOption[] = [
 type ModalType = "convert" | null;
 
 const Shop = () => {
-  const { data, addEnergy, spendPoints } = useGameStore();
+  const { data, refreshState } = useGameStore();
   const [modal, setModal] = useState<ModalType>(null);
   const [selectedConversion, setSelectedConversion] = useState<ConversionOption | null>(null);
+  const [converting, setConverting] = useState(false);
   const [resultMsg, setResultMsg] = useState<string | null>(null);
   const [mmkFlowOpen, setMmkFlowOpen] = useState(false);
   const [mmkPack, setMmkPack] = useState<{ energy: number; priceMMK: string } | null>(null);
@@ -99,14 +103,53 @@ const Shop = () => {
     setModal("convert");
   };
 
-  const handleConvert = () => {
-    if (!selectedConversion) return;
-    const ok = spendPoints(selectedConversion.pointsCost);
-    if (ok) {
-      addEnergy(selectedConversion.energy);
+  const handleConvert = async () => {
+    if (!selectedConversion || converting) return;
+    setConverting(true);
+    try {
+      // Show Monetag rewarded ad first
+      const adWatched = await showMonetangRewardAd();
+      if (!adWatched) {
+        setResultMsg("❌ Ad ကိုကြည့်ပြီးမှ Convert လုပ်လို့ရပါမည်");
+        setConverting(false);
+        return;
+      }
+
+      // Server-side conversion
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const telegramId = getTelegramId();
+      
+      const resp = await fetch(`${baseUrl}/functions/v1/convert-points`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${anonKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          telegram_id: telegramId,
+          points_cost: selectedConversion.pointsCost,
+          energy_amount: selectedConversion.energy,
+        }),
+      });
+      const result = await resp.json();
+
+      if (!resp.ok) {
+        if (result.error?.includes("Insufficient")) {
+          setResultMsg("❌ Points မလုံလောက်ပါ");
+        } else {
+          setResultMsg(`❌ ${result.error || "Convert မအောင်မြင်ပါ"}`);
+        }
+        return;
+      }
+
+      // Refresh state from server
+      await refreshState();
       setResultMsg(`✅ ${selectedConversion.energy} Energy ရရှိပါပြီ!`);
-    } else {
-      setResultMsg("❌ Points မလုံလောက်ပါ");
+    } catch (err) {
+      setResultMsg("❌ Server error. ထပ်ကြိုးစားပါ");
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -200,7 +243,9 @@ const Shop = () => {
           ) : (
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1 font-display text-xs" onClick={() => setModal(null)}>Cancel</Button>
-              <Button className="flex-1 gradient-primary text-primary-foreground font-display text-xs" onClick={handleConvert}>Convert</Button>
+              <Button className="flex-1 gradient-primary text-primary-foreground font-display text-xs" onClick={handleConvert} disabled={converting}>
+                {converting ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Converting...</> : "Convert"}
+              </Button>
             </div>
           )}
         </DialogContent>
