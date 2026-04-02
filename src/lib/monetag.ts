@@ -5,12 +5,62 @@
 
 declare global {
   interface Window {
-    show_10818525?: (config?: { type: string }) => Promise<void>;
+    show_10818525?: (config?: {
+      type?: string;
+      inAppSettings?: {
+        frequency?: number;
+        capping?: number;
+        interval?: number;
+        timeout?: number;
+        everyPage?: boolean;
+      };
+    }) => Promise<void>;
   }
 }
 
+const MONETAG_SDK_URL = "https://libtl.com/sdk.js";
+
 function isTelegramWebApp(): boolean {
   return !!(window as any).Telegram?.WebApp;
+}
+
+function hasMonetagSdk(): boolean {
+  return typeof window.show_10818525 === "function";
+}
+
+function injectMonetagFallbackScript(): void {
+  if (document.querySelector('script[data-sdk-fallback="show_10818525"]')) {
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = MONETAG_SDK_URL;
+  script.async = true;
+  script.dataset.zone = "10818525";
+  script.dataset.sdk = "show_10818525";
+  script.dataset.sdkFallback = "show_10818525";
+  document.head.appendChild(script);
+}
+
+async function ensureMonetagSdk(timeoutMs = 4000): Promise<boolean> {
+  if (!isTelegramWebApp()) return false;
+  if (hasMonetagSdk()) return true;
+
+  const start = Date.now();
+  let fallbackInjected = false;
+
+  while (Date.now() - start < timeoutMs) {
+    if (hasMonetagSdk()) return true;
+
+    if (!fallbackInjected && Date.now() - start >= 800) {
+      injectMonetagFallbackScript();
+      fallbackInjected = true;
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 200));
+  }
+
+  return hasMonetagSdk();
 }
 
 /* ─── Interstitial (In-App) ─── */
@@ -24,20 +74,24 @@ const INTERSTITIAL_INTERVAL = 3;
 export async function trackNextLevel(): Promise<void> {
   nextLevelCounter += 1;
   if (nextLevelCounter >= INTERSTITIAL_INTERVAL) {
-    nextLevelCounter = 0;
-    await showInterstitial();
+    const shown = await showInterstitial();
+    nextLevelCounter = shown ? 0 : INTERSTITIAL_INTERVAL - 1;
   }
 }
 
-async function showInterstitial(): Promise<void> {
-  if (!isTelegramWebApp() || !window.show_10818525) {
+async function showInterstitial(): Promise<boolean> {
+  const sdkReady = await ensureMonetagSdk();
+  if (!sdkReady || !window.show_10818525) {
     console.warn("[Monetag] SDK not available or not in Telegram WebApp");
-    return;
+    return false;
   }
+
   try {
     await window.show_10818525({ type: "inApp" });
+    return true;
   } catch (e) {
     console.warn("[Monetag] Interstitial failed:", e);
+    return false;
   }
 }
 
@@ -48,7 +102,8 @@ async function showInterstitial(): Promise<void> {
  * Returns true if watched successfully, false if skipped/failed/unavailable.
  */
 export async function showMonetangRewardAd(): Promise<boolean> {
-  if (!isTelegramWebApp() || !window.show_10818525) {
+  const sdkReady = await ensureMonetagSdk();
+  if (!sdkReady || !window.show_10818525) {
     console.warn("[Monetag] SDK not available or not in Telegram WebApp");
     return false;
   }
