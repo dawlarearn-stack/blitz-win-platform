@@ -9,7 +9,7 @@ import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
 import Navbar from "@/components/Navbar";
 import { useGameStore, getPointsDollarValue } from "@/lib/gameStore";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchAppConfig, apiPost } from "@/lib/api";
 import {
   Dialog,
   DialogContent,
