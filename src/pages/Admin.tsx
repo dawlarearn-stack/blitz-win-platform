@@ -666,6 +666,8 @@ const Admin = () => {
               conversions={conversions}
               setEnergyPacks={setEnergyPacks}
               setConversions={setConversions}
+              adsgramBlockId={adsgramBlockId}
+              setAdsgramBlockId={setAdsgramBlockId}
               onSave={saveConfig}
               loading={configLoading}
             />
