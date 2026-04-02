@@ -41,38 +41,20 @@ const Leaderboard = () => {
   useEffect(() => {
     const fetchTopPlayers = async () => {
       try {
-        // Get top 10 by points from user_game_state
-        // Only show real Telegram users (numeric IDs) with points > 0
-        const { data: gameStates, error } = await supabase
-          .from("user_game_state")
-          .select("telegram_id, points, games_played")
-          .gt("points", 0)
-          .not("telegram_id", "like", "guest_%")
-          .not("telegram_id", "like", "dev-%")
-          .order("points", { ascending: false })
-          .limit(10);
+        const { players: gameStates, botUsers } = await fetchLeaderboard();
 
-        if (error) throw error;
-
-        if (!gameStates || gameStates.length === 0) {
+        if (gameStates.length === 0) {
           setTopPlayers([]);
           setLoadingPlayers(false);
           return;
         }
 
-        // Get usernames from bot_users
-        const telegramIds = gameStates.map((s) => s.telegram_id);
-        const { data: botUsers } = await supabase
-          .from("bot_users")
-          .select("telegram_id, username, first_name")
-          .in("telegram_id", telegramIds);
-
         const userMap = new Map(
-          (botUsers || []).map((u) => [u.telegram_id, u.username || u.first_name || `User-${u.telegram_id.slice(-4)}`])
+          botUsers.map((u: any) => [u.telegram_id, u.username || u.first_name || `User-${u.telegram_id.slice(-4)}`])
         );
 
         setTopPlayers(
-          gameStates.map((s, i) => ({
+          gameStates.map((s: any, i: number) => ({
             rank: i + 1,
             name: userMap.get(s.telegram_id) || `Player-${s.telegram_id.slice(-4)}`,
             points: s.points,
