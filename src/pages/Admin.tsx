@@ -149,6 +149,7 @@ const Admin = () => {
         for (const item of result.data) {
           if (item.key === "energy_packs") setEnergyPacks(item.value);
           if (item.key === "point_conversions") setConversions(item.value);
+          if (item.key === "adsgram_block_id") setAdsgramBlockId(Number(item.value) || 26550);
         }
       }
     } catch {}
