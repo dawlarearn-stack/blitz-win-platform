@@ -29,7 +29,7 @@ const Dashboard = () => {
   const [withdrawOpen, setWithdrawOpen] = useState(false);
 
   const referrals = data.referrals;
-  const referralLink = `https://t.me/PGRmm_bot?start=${data.referralCode}`;
+  const referralLink = `https://t.me/PGRmm_bot?start=ref_${data.referralCode}`;
 
   const handleCopy = async () => {
     try {
