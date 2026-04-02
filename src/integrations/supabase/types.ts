@@ -200,6 +200,33 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          claimed: boolean
+          claimed_at: string | null
+          created_at: string
+          id: string
+          referred_telegram_id: string
+          referrer_telegram_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_telegram_id: string
+          referrer_telegram_id: string
+        }
+        Update: {
+          claimed?: boolean
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          referred_telegram_id?: string
+          referrer_telegram_id?: string
+        }
+        Relationships: []
+      }
       suspicious_activity: {
         Row: {
           action_type: string
