@@ -115,6 +115,7 @@ const Admin = () => {
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
   const [conversions, setConversions] = useState<ConversionOption[]>([]);
   const [configLoading, setConfigLoading] = useState(false);
+  const [adsgramBlockId, setAdsgramBlockId] = useState<number>(26550);
 
   // Announcement
   const [announceTarget, setAnnounceTarget] = useState<"all" | "single">("all");
