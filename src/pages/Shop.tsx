@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History } from "lucide-react";
+import { Coins, Zap, ShoppingCart, ArrowRightLeft, CreditCard, Banknote, History, Loader2 } from "lucide-react";
+import { showMonetangRewardAd } from "@/lib/monetag";
+import { toast } from "sonner";
+import { getTelegramId } from "@/lib/fingerprint";
 import MMKPaymentFlow from "@/components/MMKPaymentFlow";
 import USDPaymentFlow from "@/components/USDPaymentFlow";
 import PaymentHistory from "@/components/PaymentHistory";
