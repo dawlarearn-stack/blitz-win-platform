@@ -17,6 +17,7 @@ function getPointsForLevel(level) {
 const VALID_GAMES = [
   "bomb-finder", "memory-match", "reaction-tap", "lucky-box", "color-match",
   "speed-type", "pattern-memory", "number-sequence", "dice-roll", "whack-a-mole",
+  "word-scramble", "quick-math",
 ];
 
 function getIP(req) {

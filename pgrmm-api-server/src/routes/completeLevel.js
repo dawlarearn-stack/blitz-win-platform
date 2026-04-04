@@ -80,10 +80,11 @@ router.post("/", async (req, res) => {
       const user = await db.collection("users").findOne({ telegram_id });
       if (user) {
         const progress = user.progress || {};
-        const gp = progress[game_id] || { currentLevel: 0, highestLevel: 0 };
+        const gp = progress[game_id] || { gameId: game_id, currentLevel: 0, highestLevel: 0 };
         progress[game_id] = {
           ...gp,
-          currentLevel: level,
+          gameId: game_id,
+          currentLevel: level + 1,
           highestLevel: Math.max(gp.highestLevel || 0, level),
         };
         await db.collection("users").updateOne(
