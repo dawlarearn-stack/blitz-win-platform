@@ -18,6 +18,8 @@ const adminPaymentsRoutes = require("./routes/adminPayments");
 const adminWithdrawalsRoutes = require("./routes/adminWithdrawals");
 const adminAnnounceRoutes = require("./routes/adminAnnounce");
 const telegramPollRoutes = require("./routes/telegramPoll");
+const getDailyRewardsRoutes = require("./routes/getDailyRewards");
+const saveDailyRewardsRoutes = require("./routes/saveDailyRewards");
 
 const app = express();
 app.use(cors());
