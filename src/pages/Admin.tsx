@@ -365,6 +365,7 @@ const Admin = () => {
       });
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
+      if (key === "adsgram_block_id") clearAdsgramCache();
       toast.success("✅ Saved!");
     } catch {
       toast.error("Save failed");
