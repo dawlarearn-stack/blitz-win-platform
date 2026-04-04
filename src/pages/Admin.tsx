@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { clearAdsgramCache } from "@/lib/adsgram";
 import { motion } from "framer-motion";
 import {
   Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
