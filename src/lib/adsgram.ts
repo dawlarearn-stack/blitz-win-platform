@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 declare global {
   interface Window {
     Adsgram?: {
-      init: (config: { blockId: number }) => AdController;
+      init: (config: { blockId: string }) => AdController;
     };
   }
 }
