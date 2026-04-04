@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RotateCcw, Dice1 } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
