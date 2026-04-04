@@ -995,8 +995,8 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
           </h3>
           <div className="flex gap-2 items-end">
             <div className="flex-1">
-              <Label className="text-[10px] text-muted-foreground">Block ID (numeric)</Label>
-              <Input type="number" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(Number(e.target.value))}
+              <Label className="text-[10px] text-muted-foreground">Block ID</Label>
+              <Input type="text" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(e.target.value)}
                 className="bg-muted/50 border-border/50 text-xs h-8" />
             </div>
           </div>
