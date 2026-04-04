@@ -884,7 +884,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
   setEnergyPacks: (v: EnergyPack[]) => void;
   setConversions: (v: ConversionOption[]) => void;
   adsgramBlockId: string;
-  setAdsgramBlockId: (v: number) => void;
+  setAdsgramBlockId: (v: string) => void;
   onSave: (key: string, value: any) => Promise<void>;
   loading: boolean;
 }) {
