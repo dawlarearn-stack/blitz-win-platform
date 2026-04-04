@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { clearAdsgramCache } from "@/lib/adsgram";
 import { motion } from "framer-motion";
 import {
   Shield, CheckCircle, XCircle, Clock, RefreshCw, LogIn,
@@ -116,7 +117,7 @@ const Admin = () => {
   const [energyPacks, setEnergyPacks] = useState<EnergyPack[]>([]);
   const [conversions, setConversions] = useState<ConversionOption[]>([]);
   const [configLoading, setConfigLoading] = useState(false);
-  const [adsgramBlockId, setAdsgramBlockId] = useState<number>(26550);
+  const [adsgramBlockId, setAdsgramBlockId] = useState<string>("26550");
 
   // Announcement
   const [announceTarget, setAnnounceTarget] = useState<"all" | "single">("all");
@@ -162,7 +163,7 @@ const Admin = () => {
         for (const item of result.data) {
           if (item.key === "energy_packs") setEnergyPacks(item.value);
           if (item.key === "point_conversions") setConversions(item.value);
-          if (item.key === "adsgram_block_id") setAdsgramBlockId(Number(item.value) || 26550);
+          if (item.key === "adsgram_block_id") setAdsgramBlockId(String(item.value || "26550"));
         }
       }
     } catch {}
@@ -364,6 +365,7 @@ const Admin = () => {
       });
       const result = await resp.json();
       if (result.error) throw new Error(result.error);
+      if (key === "adsgram_block_id") clearAdsgramCache();
       toast.success("✅ Saved!");
     } catch {
       toast.error("Save failed");
@@ -883,8 +885,8 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
   conversions: ConversionOption[];
   setEnergyPacks: (v: EnergyPack[]) => void;
   setConversions: (v: ConversionOption[]) => void;
-  adsgramBlockId: number;
-  setAdsgramBlockId: (v: number) => void;
+  adsgramBlockId: string;
+  setAdsgramBlockId: (v: string) => void;
   onSave: (key: string, value: any) => Promise<void>;
   loading: boolean;
 }) {
@@ -912,7 +914,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
     setSaving(true);
     await onSave("energy_packs", energyPacks);
     await onSave("point_conversions", conversions);
-    await onSave("adsgram_block_id", adsgramBlockId);
+    await onSave("adsgram_block_id", String(adsgramBlockId));
     setSaving(false);
   };
 
@@ -995,8 +997,8 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
           </h3>
           <div className="flex gap-2 items-end">
             <div className="flex-1">
-              <Label className="text-[10px] text-muted-foreground">Block ID (numeric)</Label>
-              <Input type="number" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(Number(e.target.value))}
+              <Label className="text-[10px] text-muted-foreground">Block ID</Label>
+              <Input type="text" value={adsgramBlockId} onChange={(e) => setAdsgramBlockId(e.target.value)}
                 className="bg-muted/50 border-border/50 text-xs h-8" />
             </div>
           </div>

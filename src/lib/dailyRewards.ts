@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { showRewardAd } from "@/lib/adsgram";
 import { showMonetangRewardAd } from "@/lib/monetag";
-const DAILY_KEY = "pgr_daily_rewards";
+import { getTelegramId } from "@/lib/fingerprint";
+
+function getDailyKey(): string {
+  const tid = getTelegramId();
+  return `pgr_daily_rewards_${tid}`;
+}
 
 export interface CheckinDay {
   day: number;
@@ -86,7 +91,8 @@ function getDefaults(): DailyData {
 function load(): DailyData {
   const defaults = getDefaults();
   try {
-    const raw = localStorage.getItem(DAILY_KEY);
+    const key = getDailyKey();
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       const data = { ...defaults, ...parsed };
@@ -106,7 +112,7 @@ function load(): DailyData {
 }
 
 function save(data: DailyData) {
-  localStorage.setItem(DAILY_KEY, JSON.stringify(data));
+  localStorage.setItem(getDailyKey(), JSON.stringify(data));
 }
 
 export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: number) => void) {

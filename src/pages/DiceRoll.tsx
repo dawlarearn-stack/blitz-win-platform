@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RotateCcw, Dice1 } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
@@ -24,9 +24,10 @@ function getPointsForLevel(level: number): number {
 const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
 const DiceRoll = () => {
-  const { data, startLevel, completeLevel } = useGameStore();
+  const { data, loading, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["dice-roll"];
-  const [level, setLevel] = useState(progress?.currentLevel || 0);
+  const [level, setLevel] = useState(0);
+  useEffect(() => { if (!loading && progress?.currentLevel != null) setLevel(progress.currentLevel); }, [loading, progress?.currentLevel]);
   const [gameState, setGameState] = useState<"idle" | "playing" | "rolling" | "won" | "lost">("idle");
   const [wins, setWins] = useState(0);
   const [dice, setDice] = useState<[number, number]>([1, 1]);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bomb, RotateCcw, ArrowRight, Sparkles, Star, Zap } from "lucide-react";
 import GameLayout from "@/components/GameLayout";
@@ -66,9 +66,16 @@ function generateGrid(bombs: number): Cell[] {
 }
 
 const BombFinder = () => {
-  const { data, startLevel, completeLevel } = useGameStore();
+  const { data, loading, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["bomb-finder"];
-  const [level, setLevel] = useState(progress?.currentLevel ? progress.currentLevel + 1 : 1);
+  const [level, setLevel] = useState(0);
+
+  // Sync level from backend progress when data loads
+  useEffect(() => {
+    if (!loading && progress?.currentLevel != null) {
+      setLevel(progress.currentLevel);
+    }
+  }, [loading, progress?.currentLevel]);
 
   const config = useMemo(() => getLevelConfig(level), [level]);
   const [grid, setGrid] = useState<Cell[]>(() => generateGrid(config.bombs));

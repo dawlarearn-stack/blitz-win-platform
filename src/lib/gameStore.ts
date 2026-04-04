@@ -3,7 +3,9 @@ import { toast } from "sonner";
 import { getTelegramId, generateFingerprint } from "@/lib/fingerprint";
 import { apiPost } from "@/lib/api";
 
-const STORAGE_KEY = "pgr_game_data";
+function getStorageKey(): string {
+  return `pgr_game_data_${getTelegramId()}`;
+}
 
 export interface GameProgress {
   gameId: string;
@@ -54,7 +56,7 @@ export function useGameStore() {
     const loadServerState = async () => {
       try {
         const result = await apiPost("get-game-state", { telegram_id: telegramId.current });
-        setData({
+        const newData: UserData = {
           points: result.points ?? 0,
           energy: result.energy ?? 1000,
           gamesPlayed: result.games_played ?? 0,
@@ -67,13 +69,14 @@ export function useGameStore() {
             joinedAt: r.joinedAt,
             claimed: r.claimed,
           })),
-        });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          points: result.points,
-          energy: result.energy,
-          gamesPlayed: result.games_played,
-          progress: result.progress,
-          referralCode: result.referral_code,
+        };
+        setData(newData);
+        localStorage.setItem(getStorageKey(), JSON.stringify({
+          points: newData.points,
+          energy: newData.energy,
+          gamesPlayed: newData.gamesPlayed,
+          progress: newData.progress,
+          referralCode: newData.referralCode,
         }));
       } catch {
         loadLocalData();
@@ -83,7 +86,7 @@ export function useGameStore() {
 
     const loadLocalData = () => {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(getStorageKey());
         if (raw) {
           const parsed = JSON.parse(raw);
           setData({ ...defaultData, ...parsed, referrals: parsed.referrals || [] });
@@ -151,7 +154,7 @@ export function useGameStore() {
         gamesPlayed: prev.gamesPlayed + 1,
       }));
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(getStorageKey(), JSON.stringify({
         points: result.points,
         energy: result.energy,
         progress: result.progress,
