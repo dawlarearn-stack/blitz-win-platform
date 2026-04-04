@@ -912,7 +912,7 @@ function ConfigPanel({ energyPacks, conversions, setEnergyPacks, setConversions,
     setSaving(true);
     await onSave("energy_packs", energyPacks);
     await onSave("point_conversions", conversions);
-    await onSave("adsgram_block_id", adsgramBlockId);
+    await onSave("adsgram_block_id", String(adsgramBlockId));
     setSaving(false);
   };
 
