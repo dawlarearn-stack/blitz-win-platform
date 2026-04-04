@@ -1,7 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { showRewardAd } from "@/lib/adsgram";
 import { showMonetangRewardAd } from "@/lib/monetag";
-const DAILY_KEY = "pgr_daily_rewards";
+import { getTelegramId } from "@/lib/fingerprint";
+
+function getDailyKey(): string {
+  const tid = getTelegramId();
+  return `pgr_daily_rewards_${tid}`;
+}
 
 export interface CheckinDay {
   day: number;
