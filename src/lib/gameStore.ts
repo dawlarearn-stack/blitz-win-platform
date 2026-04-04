@@ -3,7 +3,9 @@ import { toast } from "sonner";
 import { getTelegramId, generateFingerprint } from "@/lib/fingerprint";
 import { apiPost } from "@/lib/api";
 
-const STORAGE_KEY = "pgr_game_data";
+function getStorageKey(): string {
+  return `pgr_game_data_${getTelegramId()}`;
+}
 
 export interface GameProgress {
   gameId: string;
