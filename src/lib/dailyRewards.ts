@@ -1,12 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { showRewardAd } from "@/lib/adsgram";
 import { showMonetangRewardAd } from "@/lib/monetag";
 import { getTelegramId } from "@/lib/fingerprint";
-
-function getDailyKey(): string {
-  const tid = getTelegramId();
-  return `pgr_daily_rewards_${tid}`;
-}
+import { apiPost } from "@/lib/api";
 
 export interface CheckinDay {
   day: number;
@@ -44,7 +40,7 @@ export interface AdTask {
   rewardPoints: number;
   rewardEnergy: number;
   provider: string;
-  cooldown: number; // seconds, 0 = no cooldown
+  cooldown: number;
 }
 
 export const AD_TASKS: AdTask[] = [
@@ -59,15 +55,15 @@ export const DAILY_FREE_ENERGY = 1000;
 export const REQUIRED_AD_TASKS_FOR_FREE_ENERGY = ["ad1", "ad2", "ad3", "ad4"];
 
 export interface DailyData {
-  lastCheckinDate: string; // YYYY-MM-DD
-  checkinStreak: number; // 0-6 index of last claimed day
-  claimedDays: number[]; // day numbers claimed today cycle
-  levelTasksClaimed: number[]; // levels claimed today
-  adProgress: Record<string, number>; // ad task id -> watches done
-  adClaimed: string[]; // ad task ids claimed
-  adLastWatch: Record<string, number>; // ad task id -> timestamp of last watch
-  resetDate: string; // YYYY-MM-DD when data was last reset
-  freeEnergyClaimed: boolean; // whether daily free energy was claimed
+  lastCheckinDate: string;
+  checkinStreak: number;
+  claimedDays: number[];
+  levelTasksClaimed: number[];
+  adProgress: Record<string, number>;
+  adClaimed: string[];
+  adLastWatch: Record<string, number>;
+  resetDate: string;
+  freeEnergyClaimed: boolean;
 }
 
 function today(): string {
@@ -88,35 +84,45 @@ function getDefaults(): DailyData {
   };
 }
 
-function load(): DailyData {
-  const defaults = getDefaults();
-  try {
-    const key = getDailyKey();
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const data = { ...defaults, ...parsed };
-      // Reset daily tasks if new day
-      if (data.resetDate !== today()) {
-        data.levelTasksClaimed = [];
-        data.adProgress = {};
-        data.adClaimed = [];
-        data.adLastWatch = {};
-        data.freeEnergyClaimed = false;
-        data.resetDate = today();
-      }
-      return data;
-    }
-  } catch {}
-  return defaults;
-}
-
-function save(data: DailyData) {
-  localStorage.setItem(getDailyKey(), JSON.stringify(data));
+// Save to backend (fire-and-forget with error handling)
+function saveToBackend(data: DailyData) {
+  const telegramId = getTelegramId();
+  apiPost("save-daily-rewards", { telegram_id: telegramId, daily: data }).catch(() => {});
 }
 
 export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: number) => void) {
-  const [daily, setDaily] = useState<DailyData>(load);
+  const [daily, setDaily] = useState<DailyData>(getDefaults);
+  const [loaded, setLoaded] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced save - waits 500ms after last change before saving
+  const debouncedSave = useCallback((data: DailyData) => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => saveToBackend(data), 500);
+  }, []);
+
+  // Load from backend on mount
+  useEffect(() => {
+    const telegramId = getTelegramId();
+    apiPost<DailyData>("get-daily-rewards", { telegram_id: telegramId })
+      .then((data) => {
+        if (data) {
+          setDaily({
+            lastCheckinDate: data.lastCheckinDate || "",
+            checkinStreak: data.checkinStreak || 0,
+            claimedDays: data.claimedDays || [],
+            levelTasksClaimed: data.levelTasksClaimed || [],
+            adProgress: data.adProgress || {},
+            adClaimed: data.adClaimed || [],
+            adLastWatch: data.adLastWatch || {},
+            resetDate: data.resetDate || today(),
+            freeEnergyClaimed: data.freeEnergyClaimed || false,
+          });
+        }
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
 
   // Ticker for cooldown display
   const [tick, setTick] = useState(0);
@@ -126,15 +132,13 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
   }, []);
 
   const getNextCheckinDay = useCallback((): number => {
-    if (daily.lastCheckinDate === today()) return -1; // already claimed today
-    // If last checkin was yesterday, continue streak
+    if (daily.lastCheckinDate === today()) return -1;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yStr = yesterday.toISOString().slice(0, 10);
     if (daily.lastCheckinDate === yStr) {
       return (daily.checkinStreak % 7) + 1;
     }
-    // Streak broken or first time
     return 1;
   }, [daily]);
 
@@ -153,10 +157,10 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
         checkinStreak: nextDay,
         claimedDays: [...prev.claimedDays, nextDay],
       };
-      save(next);
+      debouncedSave(next);
       return next;
     });
-  }, [getNextCheckinDay, addPoints, addEnergy]);
+  }, [getNextCheckinDay, addPoints, addEnergy, debouncedSave]);
 
   const claimLevelTask = useCallback(async (level: number) => {
     const task = LEVEL_TASKS.find((t) => t.level === level);
@@ -167,36 +171,34 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     if (task.energy > 0) addEnergy(task.energy);
     setDaily((prev) => {
       const next = { ...prev, levelTasksClaimed: [...prev.levelTasksClaimed, level] };
-      save(next);
+      debouncedSave(next);
       return next;
     });
-  }, [daily, addPoints, addEnergy]);
+  }, [daily, addPoints, addEnergy, debouncedSave]);
 
   const watchAd = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
     if (!task) return;
     const current = daily.adProgress[taskId] || 0;
     if (current >= task.required) return;
-    // Check cooldown
     if (task.cooldown > 0) {
       const last = daily.adLastWatch[taskId] || 0;
       if (Date.now() - last < task.cooldown * 1000) return;
     }
-    // Show rewarded ad from the appropriate provider
     const adWatched = task.provider === "Monetag"
       ? await showMonetangRewardAd()
       : await showRewardAd();
-    if (!adWatched) return; // ad skipped or failed — don't count
+    if (!adWatched) return;
     setDaily((prev) => {
       const next = {
         ...prev,
         adProgress: { ...prev.adProgress, [taskId]: (prev.adProgress[taskId] || 0) + 1 },
         adLastWatch: { ...prev.adLastWatch, [taskId]: Date.now() },
       };
-      save(next);
+      debouncedSave(next);
       return next;
     });
-  }, [daily]);
+  }, [daily, debouncedSave]);
 
   const claimAdReward = useCallback(async (taskId: string) => {
     const task = AD_TASKS.find((t) => t.id === taskId);
@@ -207,10 +209,10 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     if (task.rewardEnergy > 0) addEnergy(task.rewardEnergy);
     setDaily((prev) => {
       const next = { ...prev, adClaimed: [...prev.adClaimed, taskId] };
-      save(next);
+      debouncedSave(next);
       return next;
     });
-  }, [daily, addPoints, addEnergy]);
+  }, [daily, addPoints, addEnergy, debouncedSave]);
 
   const getCooldownRemaining = useCallback((taskId: string): number => {
     const task = AD_TASKS.find((t) => t.id === taskId);
@@ -231,13 +233,14 @@ export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: n
     addEnergy(DAILY_FREE_ENERGY);
     setDaily((prev) => {
       const next = { ...prev, freeEnergyClaimed: true };
-      save(next);
+      debouncedSave(next);
       return next;
     });
-  }, [canClaimFreeEnergy, addEnergy]);
+  }, [canClaimFreeEnergy, addEnergy, debouncedSave]);
 
   return {
     daily,
+    loaded,
     getNextCheckinDay,
     claimCheckin,
     claimLevelTask,

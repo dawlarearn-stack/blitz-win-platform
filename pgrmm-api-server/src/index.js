@@ -18,6 +18,8 @@ const adminPaymentsRoutes = require("./routes/adminPayments");
 const adminWithdrawalsRoutes = require("./routes/adminWithdrawals");
 const adminAnnounceRoutes = require("./routes/adminAnnounce");
 const telegramPollRoutes = require("./routes/telegramPoll");
+const getDailyRewardsRoutes = require("./routes/getDailyRewards");
+const saveDailyRewardsRoutes = require("./routes/saveDailyRewards");
 
 const app = express();
 app.use(cors());
@@ -41,6 +43,8 @@ app.use("/api/admin-payments", adminPaymentsRoutes);
 app.use("/api/admin-withdrawals", adminWithdrawalsRoutes);
 app.use("/api/admin-announce", adminAnnounceRoutes);
 app.use("/api/telegram-poll", telegramPollRoutes);
+app.use("/api/get-daily-rewards", getDailyRewardsRoutes);
+app.use("/api/save-daily-rewards", saveDailyRewardsRoutes);
 
 const PORT = process.env.PORT || 3001;
 

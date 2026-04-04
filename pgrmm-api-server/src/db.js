@@ -21,6 +21,7 @@ async function connectDB() {
   await db.collection("device_fingerprints").createIndex({ telegram_id: 1, fingerprint: 1 }, { unique: true });
   await db.collection("banned_users").createIndex({ telegram_id: 1 }, { unique: true });
   await db.collection("suspicious_activity").createIndex({ created_at: -1 });
+  await db.collection("daily_rewards_state").createIndex({ telegram_id: 1 }, { unique: true });
 
   console.log("Indexes created");
 }

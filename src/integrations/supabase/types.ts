@@ -83,6 +83,51 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_rewards_state: {
+        Row: {
+          ad_claimed: Json
+          ad_last_watch: Json
+          ad_progress: Json
+          checkin_streak: number
+          claimed_days: Json
+          created_at: string
+          free_energy_claimed: boolean
+          last_checkin_date: string
+          level_tasks_claimed: Json
+          reset_date: string
+          telegram_id: string
+          updated_at: string
+        }
+        Insert: {
+          ad_claimed?: Json
+          ad_last_watch?: Json
+          ad_progress?: Json
+          checkin_streak?: number
+          claimed_days?: Json
+          created_at?: string
+          free_energy_claimed?: boolean
+          last_checkin_date?: string
+          level_tasks_claimed?: Json
+          reset_date?: string
+          telegram_id: string
+          updated_at?: string
+        }
+        Update: {
+          ad_claimed?: Json
+          ad_last_watch?: Json
+          ad_progress?: Json
+          checkin_streak?: number
+          claimed_days?: Json
+          created_at?: string
+          free_energy_claimed?: boolean
+          last_checkin_date?: string
+          level_tasks_claimed?: Json
+          reset_date?: string
+          telegram_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       device_fingerprints: {
         Row: {
           fingerprint: string
