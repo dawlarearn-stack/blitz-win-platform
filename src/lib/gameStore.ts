@@ -154,7 +154,7 @@ export function useGameStore() {
         gamesPlayed: prev.gamesPlayed + 1,
       }));
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      localStorage.setItem(getStorageKey(), JSON.stringify({
         points: result.points,
         energy: result.energy,
         progress: result.progress,
