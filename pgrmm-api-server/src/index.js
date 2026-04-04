@@ -43,6 +43,8 @@ app.use("/api/admin-payments", adminPaymentsRoutes);
 app.use("/api/admin-withdrawals", adminWithdrawalsRoutes);
 app.use("/api/admin-announce", adminAnnounceRoutes);
 app.use("/api/telegram-poll", telegramPollRoutes);
+app.use("/api/get-daily-rewards", getDailyRewardsRoutes);
+app.use("/api/save-daily-rewards", saveDailyRewardsRoutes);
 
 const PORT = process.env.PORT || 3001;
 
