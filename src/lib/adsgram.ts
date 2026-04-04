@@ -18,12 +18,12 @@ interface AdController {
   show: () => Promise<{ done: boolean; description: string; state: string; error: boolean }>;
 }
 
-const DEFAULT_BLOCK_ID = 26550;
+const DEFAULT_BLOCK_ID = "26550";
 
 let controller: AdController | null = null;
-let cachedBlockId: number | null = null;
+let cachedBlockId: string | null = null;
 
-async function fetchBlockId(): Promise<number> {
+async function fetchBlockId(): Promise<string> {
   if (cachedBlockId !== null) return cachedBlockId;
   try {
     const { data } = await supabase
@@ -31,8 +31,8 @@ async function fetchBlockId(): Promise<number> {
       .select("value")
       .eq("key", "adsgram_block_id")
       .maybeSingle();
-    if (data?.value && typeof data.value === "number") {
-      cachedBlockId = data.value;
+    if (data?.value) {
+      cachedBlockId = String(data.value);
       return cachedBlockId;
     }
   } catch (e) {

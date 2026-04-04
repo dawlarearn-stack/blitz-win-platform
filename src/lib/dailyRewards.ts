@@ -91,7 +91,8 @@ function getDefaults(): DailyData {
 function load(): DailyData {
   const defaults = getDefaults();
   try {
-    const raw = localStorage.getItem(DAILY_KEY);
+    const key = getDailyKey();
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       const data = { ...defaults, ...parsed };
@@ -111,7 +112,7 @@ function load(): DailyData {
 }
 
 function save(data: DailyData) {
-  localStorage.setItem(DAILY_KEY, JSON.stringify(data));
+  localStorage.setItem(getDailyKey(), JSON.stringify(data));
 }
 
 export function useDailyRewards(addPoints: (n: number) => void, addEnergy: (n: number) => void) {
