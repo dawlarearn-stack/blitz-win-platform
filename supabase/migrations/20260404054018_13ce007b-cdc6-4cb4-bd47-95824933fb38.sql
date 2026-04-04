@@ -1,0 +1,1 @@
+UPDATE app_config SET value = '"26767"', updated_at = now() WHERE key = 'adsgram_block_id';

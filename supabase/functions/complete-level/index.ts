@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
           ...progress,
           [game_id]: {
             ...gameProgress,
-            currentLevel: level,
+            currentLevel: level + 1,
             highestLevel: Math.max(gameProgress.highestLevel || 0, level),
           },
         };

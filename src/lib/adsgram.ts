@@ -18,7 +18,7 @@ interface AdController {
   show: () => Promise<{ done: boolean; description: string; state: string; error: boolean }>;
 }
 
-const DEFAULT_BLOCK_ID = "26550";
+const DEFAULT_BLOCK_ID = "26767";
 
 let controller: AdController | null = null;
 let cachedBlockId: string | null = null;
