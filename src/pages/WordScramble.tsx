@@ -47,9 +47,10 @@ function scramble(word: string): string {
 }
 
 const WordScramble = () => {
-  const { data, addPoints, spendEnergy, updateProgress } = useGameStore();
+  const { data, loading, addPoints, spendEnergy, updateProgress } = useGameStore();
   const progress = data.progress["word-scramble"];
-  const [level, setLevel] = useState(progress?.currentLevel || 0);
+  const [level, setLevel] = useState(0);
+  useEffect(() => { if (!loading && progress?.currentLevel != null) setLevel(progress.currentLevel); }, [loading, progress?.currentLevel]);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [currentWord, setCurrentWord] = useState("");
   const [scrambled, setScrambled] = useState("");

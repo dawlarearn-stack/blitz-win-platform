@@ -68,9 +68,10 @@ function generateProblem(level: number) {
 }
 
 const QuickMath = () => {
-  const { data, startLevel, completeLevel } = useGameStore();
+  const { data, loading, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["quick-math"];
-  const [level, setLevel] = useState(progress?.currentLevel || 0);
+  const [level, setLevel] = useState(0);
+  useEffect(() => { if (!loading && progress?.currentLevel != null) setLevel(progress.currentLevel); }, [loading, progress?.currentLevel]);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [problem, setProblem] = useState(() => generateProblem(level));
   const [solved, setSolved] = useState(0);

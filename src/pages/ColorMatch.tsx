@@ -45,9 +45,10 @@ function pickRandom<T>(arr: T[], exclude?: T): T {
 }
 
 const ColorMatch = () => {
-  const { data, startLevel, completeLevel } = useGameStore();
+  const { data, loading, startLevel, completeLevel } = useGameStore();
   const progress = data.progress["color-match"];
-  const [level, setLevel] = useState(progress?.currentLevel || 0);
+  const [level, setLevel] = useState(0);
+  useEffect(() => { if (!loading && progress?.currentLevel != null) setLevel(progress.currentLevel); }, [loading, progress?.currentLevel]);
   const [gameState, setGameState] = useState<"idle" | "playing" | "won" | "lost">("idle");
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
